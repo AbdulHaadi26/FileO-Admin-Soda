@@ -1,0 +1,30 @@
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-width: 300px;
+  scrollbar-width: thin;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+textarea:focus,textarea:active:focus,textarea.active:focus,
+input:focus,input:active:focus,input.active:focus,
+.btn:focus,.btn:active:focus,.btn.active:focus,
+select:focus,select:active:focus,select.active:focus,
+select.focus,select:active.focus,select.active.focus,
+.btn.focus,.btn:active.focus,.btn.active.focus,
+input.focus,input:active.focus,input.active.focus {
+    outline: none;
+    box-shadow:none !important;
+    border-color: grey !important;
+}
+
+@media only screen and (max-width:992px) {
+  body{
+    line-height: 1.5rem !important;
+  }
+}

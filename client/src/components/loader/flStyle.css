@@ -1,0 +1,100 @@
+.f-l .fl-ts{
+    text-align: center;
+    font-weight: 600;
+    color: #2f3542;
+    font-size: 16px;
+    letter-spacing: 3px;
+    margin-top: 16px;
+    width: 60%;
+    animation-name: fadeInOut;
+    animation-delay: 8.5s;
+    animation-duration: 9s;
+}
+
+.f-l .fl-w .fl-jfe{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    width: 90%;
+}
+
+.f-l .fl-w{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+}
+
+.f-l .fl-w .fl-sw{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 80%;
+    padding: 12px;
+}
+
+.f-l .fl-w .fl-sw-sub{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+}
+
+.f-l .fl-w .fl-sb-w{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 100;
+}
+
+.f-l .fl-w .img-logo{
+    margin-top: 12px;
+    width: 60px;
+    height: 60px;
+}
+
+.f-l .fl-sw img{
+    width: 50px;
+    height: 50px;
+    margin: 6px;
+}
+
+.f-l .fl-w .fl-n{
+    font-size: 12px;
+    color:#57606f;
+    word-break: break-all;
+}
+
+.f-l .fl-w .fl-per{
+    width: 20%;
+    margin-left: 12px;
+}
+
+.f-l .fl-w .fl-h{
+    margin-top: 20px;
+    font-weight: 700;
+    font-size: 12px;
+    width: 70%;
+    color: #57606f;
+}
+
+.f-l .fl-w .btn{
+    margin-top: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 16px 6px 16px;
+}
+
+@media only screen and (max-width:992px) {
+    .f-l .fl-ts{
+        width: 80%;
+    }
+
+    .f-l .fl-w .fl-h{
+        width: 75%;
+    }
+    
+    .f-l .fl-w .fl-sw{
+        width: 90%;
+    }
+}

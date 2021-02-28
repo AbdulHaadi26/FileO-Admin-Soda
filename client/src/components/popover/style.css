@@ -1,0 +1,33 @@
+.fa-L {
+  cursor: pointer;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  background-image: url('../../assets/help.svg');
+  display: inline-block;
+}
+
+.fa-L:hover .pop-up {
+  display: block;
+}
+
+.fa-L .pop-up {
+  background-color: #dff9fb;
+  color: #000;
+  padding: 12px;
+  text-align: left;
+  border-radius: 2px;
+  position: absolute;
+  line-height: 1.6em;
+  z-index: 1;
+  display: none;
+  width: 220px;
+  bottom: 100%;
+  left: 50%;
+  box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.25), 0 2px 6px 0 rgba(0, 0, 0, 0.34);
+  margin-left: -100px;
+  margin-bottom: -4px;
+  font-size: 12px;
+  border: 1px solid #58B19F;
+  font-weight: 400;
+}

@@ -1,0 +1,42 @@
+.toast {
+    min-width: 350px;
+    min-height: 100px;
+    font-size: 0.875rem;
+    background-color: rgb(255, 255, 255);
+    border: 1px solid #2c3e50;
+    box-shadow: 0 0.25rem 0.75rem #0000001a;
+    border-radius: 0.25rem;
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    animation: Modal 0.5s ease-in-out;
+    -webkit-animation: Modal 0.5s ease-in-out;
+    animation-fill-mode: forwards;
+    -webkit-animation-fill-mode: forwards;
+}
+
+@keyframes Modal {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.toast-header {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    color: white;
+    background-clip: padding-box;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-top-left-radius: calc(0.25rem - 1px);
+    border-top-right-radius: calc(0.25rem - 1px);
+}
+
+.toast-body {
+    padding: 0.75rem;
+}

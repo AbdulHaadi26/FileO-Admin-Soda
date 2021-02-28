@@ -1,0 +1,183 @@
+.u-s-w {
+    background-color: #2c3e50;
+    height: 100vh;
+    overflow-y: auto !important;
+    box-shadow: 0 1px 3px 2px rgba(0, 0, 0, 0.3), 0 1px 3px 2px rgba(0, 0, 0, 0.39);
+}
+
+.u-s-w::-webkit-scrollbar {
+    width: 10px;
+}
+ 
+.u-s-w::-webkit-scrollbar-track { 
+    background-color: rgb(213, 213, 213);
+}
+ 
+.u-s-w::-webkit-scrollbar-thumb {
+    border-radius: 2px;
+    background-color: rgb(175, 175, 175);
+}
+
+.u-s-w .logo-user {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.u-s-w .notif {
+    color: white;
+    background-color: red;
+    float: right;
+    margin-left: auto;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 1000px;
+    min-width: 20px;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.u-s-w .logo-user .logo {
+    width: 40px;
+    margin-right: 8%;
+}
+
+.u-s-w .logo-user .h {
+    margin-top: 12px;
+    letter-spacing: 3px;
+    color: white;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.u-s-w .a {
+    background-color: #0984e3;
+}
+
+.u-s-w .a:hover {
+    background-color: #0984e3 !important;
+}
+
+.u-s-w .s-l {
+    display: block;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: white;
+    font-weight: 300;
+    display: flex;
+    flex-direction: row;
+}
+
+.u-s-w .s-l:hover {
+    background-color: #34495e;
+}
+
+.u-s-w .s-l .fa {
+    margin-top: 2px;
+    width: 15px;
+    height: 15px;
+    margin-right: 12px;
+}
+
+.u-s-w .feed {
+    background-image: url('../../assets/wifi.svg');
+}
+
+.u-s-w .org {
+    background-image: url('../../assets/org.svg');
+}
+
+.u-s-w .str {
+    background-image: url('../../assets/disk.svg');
+}
+
+.u-s-w .emp {
+    background-image: url('../../assets/team.svg');
+}
+
+.u-s-w .role {
+    background-image: url('../../assets/role.svg');
+}
+
+.u-s-w .transfer {
+    background-image: url('../../assets/data.svg');
+}
+
+.u-s-w .proj {
+    background-image: url('../../assets/project.svg');
+}
+
+.u-s-w .astr {
+    background-size: contain;
+    background-image: url('../../assets/astronomy.svg');
+}
+
+.u-s-w .menu {
+    width: 26px;
+    height: 26px;
+    background-image: url('../../assets/menu.svg');
+}
+
+.u-s-w .sn {
+    background-size: contain;
+    background-image: url('../../assets/team-group.svg');
+}
+
+.u-s-w .plans {
+    background-size: contain;
+    background-image: url('../../assets/cal.svg');
+}
+
+.u-s-w .cloud {
+    background-image: url('../../assets/cloud.svg');
+}
+
+.u-s-w .clock {
+    background-image: url('../../assets/clock.svg');
+}
+
+.u-s-w .share {
+    background-image: url('../../assets/share.svg');
+}
+
+.u-s-w .file {
+    background-image: url('../../assets/file.svg');
+}
+
+.u-s-w .files {
+    background-image: url('../../assets/files.svg');
+}
+
+@media only screen and (max-width:992px) {
+    .u-s-w {
+        min-height: auto;
+        height: auto;
+        flex: none !important;
+        overflow-y: hidden !important;
+    }
+    .u-s-w .logo {
+        margin-right: 3% !important;
+        margin-left: 5%;
+    }
+    .u-s-w .logo-user {
+        justify-content: flex-start;
+    }
+    .u-s-w .btnBurger {
+        background-color: white;
+        color: #636e72;
+        margin-right: 5%;
+    }
+    .u-s-w .a {
+        border-right: none;
+    }
+    .u-s-w .btnBurger:hover {
+        background-color: white;
+        color: #636e72;
+    }
+}

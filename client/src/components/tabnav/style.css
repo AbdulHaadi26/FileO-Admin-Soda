@@ -1,0 +1,44 @@
+.tabNav {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+  border-bottom: 2px solid #dfe6e9;
+}
+
+.tabNav .item {
+  text-transform: capitalize;
+  font-size: 14px;
+  margin-top: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.tabNav .tab {
+  min-width: 16.6666666667%;
+  padding-right: 12px;
+}
+
+.tabNav .notif {
+  color: white;
+  background-color: red;
+  float: right;
+  margin-right: 12px;
+  margin-left: auto;
+  margin-top: -4px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 1000px;
+  min-width: 20px;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media only screen and (max-width: 992px) {
+  .tabNav .tab {
+    min-width: 33.3333333333%;
+  }
+}

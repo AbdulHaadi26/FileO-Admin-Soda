@@ -1,0 +1,45 @@
+.set-w{
+    margin-bottom: 30px;
+    margin-top: 20px;
+}
+
+.set-w .data .link{
+    cursor: pointer;
+    color: #2c3e50;
+    text-align:right;
+    width: 5%;
+}
+
+.set-w .data .dyna {
+    width:60%;
+    text-align: right;
+}
+
+.set-w .data .static{
+    width: 30%;
+    text-align: left;
+}
+
+.set-w .data .link:hover{
+    color: #636e72;
+}
+
+.set-w .data .user-profile{
+    width: 70px;
+    height: 70px;
+    border-radius: 1000px;
+}
+
+@media only screen and (max-width:992px) {
+    .set-w .data .static {
+        width: 30%;
+    }
+
+    .set-w .data .dyna{
+        width:60%
+    }
+
+    .set-w .data .link{
+        width:10%;
+    }
+}

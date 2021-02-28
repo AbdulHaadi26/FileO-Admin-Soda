@@ -1,0 +1,36 @@
+.pb-w{
+    padding: 6px 40px 6px 40px;
+    margin-top: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.07), 0px -1px 1px 0px rgba(0, 0, 0, 0.19);
+}
+
+.pb-w .t{
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 2px;
+    margin-top: 12px;
+}
+
+.pb-w .clogo{
+    width: 60px;
+    margin-right: 12px;
+}
+
+.pb-w .st{
+    text-align: center;
+    font-size: 10px;
+    font-weight: 300;
+    color: #636e72;
+    margin-top: 12px;
+}
+
+@media only screen and (max-width:992px) {
+    .pb-w{
+        padding: 20px 40px 12px 40px !important;
+    }
+}

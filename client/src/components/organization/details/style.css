@@ -1,0 +1,64 @@
+.mOW {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.oIW2 {
+  padding: 12px 12px 12px 12px;
+  background-color: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.15), 0 1px 3px 0 rgba(0, 0, 0, 0.24);
+  border-bottom: solid 5px #2c3e50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+
+.oIW2 .col-12 {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.oIW2 .fa-plus {
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  margin-right: 6px;
+}
+
+.oIW2 .fa-eye {
+  width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  margin-right: 6px;
+}
+
+.oIW2 .fa-plus {
+  background-image: url('../../../assets/pl1.svg');
+}
+
+.oIW2 .fa-plus:hover {
+  background-image: url('../../../assets/pl2.svg');
+}
+
+.oIW2 .fa-eye {
+  background-image: url('../../../assets/eye2.svg');
+}
+
+.oIW2 .fa-eye:hover {
+  background-image: url('../../../assets/eye1.svg');
+}
+
+@media only screen and (max-width:992px) {
+  .oIW2 {
+    margin-left: 0px;
+    margin-right: 0px;
+    min-height: 10vh;
+  }
+}

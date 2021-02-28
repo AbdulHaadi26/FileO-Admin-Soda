@@ -1,0 +1,46 @@
+.data{
+    margin-top: 20px;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-bottom: 10px;
+    border-bottom: #dfe6e9 1px solid;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+ .data .link{
+    cursor: pointer;
+    color: #2c3e50;
+    text-align:right;
+    width: 5%;
+}
+
+.data .dyna {
+    width:60%;
+    text-align: right;
+}
+
+ .data .static{
+    width: 30%;
+    text-align: left;
+}
+
+.data .link:hover{
+    color: #636e72;
+}
+
+@media only screen and (max-width:992px) {
+.data .static {
+        width: 30%;
+    }
+
+    .data .dyna{
+        width:60%
+    }
+
+     .data .link{
+        width:10%;
+    }
+}

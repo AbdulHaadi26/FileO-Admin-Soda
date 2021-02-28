@@ -1,0 +1,29 @@
+
+.d-d-w{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+.d-d-i{
+    width: 100%;
+    margin-top: 12px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.15), 0 1px 3px 0 rgba(0, 0, 0, 0.24);
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0px 6px 0px 6px;
+    border-radius: 12px;
+}
+
+.d-d-i-n{
+    word-break: break-all;
+    margin-top: 6px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: none !important;
+}

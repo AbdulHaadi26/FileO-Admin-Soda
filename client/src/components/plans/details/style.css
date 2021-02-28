@@ -1,0 +1,56 @@
+.nt-w .title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 12px;
+    color: white;
+}
+
+.nt-w .task {
+    background-color: white;
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.15), 0 2px 3px 0 rgba(0, 0, 0, 0.24);
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin-top: 12px;
+}
+
+.nt-w .task p {
+    font-size: 14px;
+}
+
+.nt-w .add {
+    cursor: pointer;
+    background-image: url('../../../assets/plusC.svg');
+    width: 24px;
+    height: 24px;
+    background-size: contain;
+    margin-left: auto;
+}
+
+.nt-w .icons {
+    margin-left: 4px;
+    margin-right: 4px;
+    width: 14px;
+    height: 14px;
+    margin-bottom: 4px;
+    background-size: contain;
+    cursor: pointer;
+}
+
+.nt-w .edit {
+    background-image: url('../../../assets/edt1.svg');
+}
+
+.nt-w .del {
+    background-image: url('../../../assets/delete.svg');
+}
+
+.nt-w .check {
+    background-image: url('../../../assets/check.svg');
+}
+
+.nt-w .complete {
+    border-bottom: 8px solid #2ecc71;
+}

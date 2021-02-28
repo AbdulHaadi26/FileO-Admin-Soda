@@ -1,0 +1,125 @@
+.mEW {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.eIW {
+    padding: 12px 12px 12px 12px;
+    background-color: white;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.15), 0 1px 3px 0 rgba(0, 0, 0, 0.24);
+    border-bottom: solid 5px #2c3e50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    align-self: stretch;
+    justify-content: center;
+}
+
+.eIW img {
+    width: 70px;
+    height: 70px;
+    border-radius: 1000px;
+    margin-top: 12px;
+    margin-bottom: 22px;
+}
+
+.eIW .e-r {
+    text-align: center;
+}
+
+.eIW .overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #2c3e50;
+    overflow: hidden;
+    width: 100%;
+    height: 0;
+    transition: .5s ease;
+}
+
+.eIW:hover .overlay {
+    height: 100%;
+}
+
+.eIW .overlay .text {
+    color: white;
+    font-size: 17px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.eIW .overlay .subtext {
+    color: white;
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+.div-t {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.div-t .exchange {
+    width: 48px;
+    height: 48px;
+    margin-left: 12px;
+    margin-right: 12px;
+    background-image: url('../../../assets//dtB.svg');
+}
+
+.div-t .btn-success, .mEW .btn-success{
+    padding: 5px 12px 5px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: green;
+    background-color: white;
+}
+
+.div-t .btn-success:hover, .mEW .btn-success:hover{
+    color: white;
+    background-color: green;
+}
+
+.div-t .btn-secondary{
+    padding: 5px 12px 5px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: grey;
+    background-color: white;
+}
+
+.div-t .btn-secondary:hover{
+    color: white;
+    background-color: grey;
+}
+
+.div-t .eIW {
+    border: none !important;
+}
+
+@media only screen and (max-width:992px) {
+    .eIW {
+        margin-left: 0px;
+        margin-right: 0px;
+        min-height: auto !important;
+        align-self: auto !important;
+    }
+    .div-t {
+        flex-direction: column;
+    }
+}

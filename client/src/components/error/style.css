@@ -1,0 +1,49 @@
+.err-m, .err-m2{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.err-m .err-img{
+    width: 200px;
+    height: 200px;
+    margin-top: 80px;
+}
+
+.err-m2 .err-img{
+    width: 200px;
+    height: 200px;
+    margin-top: 80px;
+}
+
+.err-m .eT, .err-m2 .eT{
+    text-align: center;
+    font-weight: 700;
+    margin-left: 6px;
+    margin-top: 24px;
+}
+
+.err-m .eT{
+    font-size: 16px;
+}
+
+.err-m2 .eT{
+    font-size: 22px;
+}
+
+.err-m .btn-success, .err-m2 .btn-success{
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.err-m .btn-success{
+    margin-bottom: 30px;
+}
+
+@media only screen and (max-width:992px) {
+    .err-m .err-img{
+        margin-top: 50px;
+    }
+}
