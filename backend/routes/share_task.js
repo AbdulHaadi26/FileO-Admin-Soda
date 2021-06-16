@@ -46,6 +46,7 @@ const {
     getAllUserSharedQueryCountP,
     getAllUserSharedQueryLimitP
 } = require('../schemas/user');
+const { fileOUrl, logoUrl } = require('../constants');
 
 router.post('/register', JWT, async (req, res) => {
     var connection;
@@ -55,18 +56,21 @@ router.post('/register', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionNotes, collectionUser, collectionSharedN, collectionNotif, collectionSets] = [
-            await soda.createCollection('notes'), await soda.createCollection('users'), await soda.createCollection('shrs_note'),
-            await soda.createCollection('notifs'), await soda.createCollection('sets')
-        ];
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
+        const collectionNotif = await soda.createCollection('notifs');
+        const collectionSets = await soda.createCollection('sets');
 
         const { sWith, name, noteId } = req.body;
-        var p1 = findNoteByIdP(noteId, collectionNotes, collectionUser);
-        var p2 = getAllUserNoteIds(noteId, collectionSharedN, collectionUser);
-        var p3 = isExist(sWith, noteId, collectionSharedN);
-        var p4 = findUserById(sWith, collectionUser);
-        var [note, arrId, isEx, user] = [await p1, await p2, await p3, await p4];
+
+        let note = await findNoteByIdP(noteId, collectionNotes, collectionUser);
+        let arrId = await getAllUserNoteIds(noteId, collectionSharedN, collectionUser);
+        let isEx = await isExist(sWith, noteId, collectionSharedN);
+        let user = await findUserById(sWith, collectionUser);
+
         arrId.push(user.email);
+
         if (!isEx) {
 
             let sharedData = {
@@ -77,11 +81,11 @@ router.post('/register', JWT, async (req, res) => {
 
             await createSharedN(sharedData, collectionSharedN);
         }
-        const p5 = getAllUserSharedCountP(note.org, arrId, req.token._id, collectionUser);
-        const p6 = getAllUserSharedLimitP(0, note.org, arrId, req.token._id, collectionUser);
-        const p7 = getAllAssignedCount(noteId, collectionSharedN);
-        const p8 = getAllAssignedLimit(noteId, 0, collectionSharedN, collectionUser);
-        const [userCount, userList, assignedCount, assignedList] = [await p5, await p6, await p7, await p8];
+
+        let userCount = await getAllUserSharedCountP(note.org, arrId, req.token._id, collectionUser);
+        let userList = await getAllUserSharedLimitP(0, note.org, arrId, req.token._id, collectionUser);
+        let assignedCount = await getAllAssignedCount(noteId, collectionSharedN);
+        let assignedList = await getAllAssignedLimit(noteId, 0, collectionSharedN, collectionUser);
 
         const set = await getSetting(collectionSets);
 
@@ -94,14 +98,14 @@ router.post('/register', JWT, async (req, res) => {
         });
 
         let html = `
-            <img src="https://demo1.file-o.com/public/static/logo.png" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
+            <img src="${logoUrl}" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
             <h2 style="margin-left: 50%;">File-O</h2>
             <br/>
             <h3 style="font-weight:400;">Hello <b>${user.name}</b>,</h3>
             
             <p>You have been assigned a task ${note.title} by ${note.postedby.name} in File-O which is due on ${note.due}.</p>
 
-            <p><br/>Thank you for using File-O. Questions or concerns? Contact <a rel="noopener noreferrer" target="_blank" href="https://www.file-o.com/support">File-O Support</a>.</p>
+            <p><br/>Thank you for using File-O. Questions or concerns? Contact <a rel="noopener noreferrer" target="_blank" href="${fileOUrl}/support">File-O Support</a>.</p>
             <br/>
 
             Sincerely,
@@ -167,9 +171,8 @@ router.get('/getEmployeeCount', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedN] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
 
         const { _id, nId } = req.query;
         let arrId = await getAllUserNoteIds(nId, collectionSharedN, collectionUser);
@@ -192,9 +195,8 @@ router.get('/getEmployees', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedN] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
 
         const { offset, _id, nId } = req.query;
         let arrId = await getAllUserNoteIds(nId, collectionSharedN, collectionUser);
@@ -219,9 +221,8 @@ router.get('/searchEmployeeCount', JWT, async (req, res) => {
 
         const { string, _id, nId } = req.query;
 
-        const [collectionUser, collectionSharedN] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
 
         let arrId = await getAllUserNoteIds(nId, collectionSharedN, collectionUser);
         let count = await getAllUserSharedQueryCountP(string, _id, arrId, req.token._id, collectionUser);
@@ -244,9 +245,8 @@ router.get('/searchEmployees', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedN] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
 
         const { offset, string, _id, nId } = req.query;
         let arrId = await getAllUserNoteIds(nId, collectionSharedN, collectionUser);
@@ -293,9 +293,8 @@ router.get('/getAssigned', JWT, async (req, res) => {
 
         const { limit, _id } = req.query;
 
-        const [collectionUser, collectionSharedN] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
 
         let userList = await getAllAssignedLimit(_id, limit, collectionSharedN, collectionUser);
 
@@ -319,7 +318,7 @@ router.get('/searchAssignedCount', JWT, async (req, res) => {
         const collectionSharedN = await soda.createCollection('shrs_note');
 
         const { string, _id } = req.query;
-        var count = await getAllAssignedQueryCount(_id, string, collectionSharedN);
+        let count = await getAllAssignedQueryCount(_id, string, collectionSharedN);
 
         return res.json({ userCount: count });
     } catch (e) {
@@ -338,9 +337,8 @@ router.get('/searchAssigned', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedN] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
 
         const { limit, string, _id } = req.query;
         let userList = await getAllAssignedQueryLimit(_id, limit, string, collectionSharedN, collectionUser);
@@ -385,9 +383,9 @@ router.get('/getNote', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedN, collectionNotes] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note'), await soda.createCollection('notes')
-        ];
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
 
         const { limit, _id, type, status, due } = req.query;
         let noteList = await getAllNoteLimit(_id, limit, true, type, status, due, collectionSharedN, collectionNotes, collectionUser);
@@ -412,8 +410,8 @@ router.get('/searchNoteCount', JWT, async (req, res) => {
 
         const collectionSharedN = await soda.createCollection('shrs_note');
 
-        const { string, _id, search, type, status, due } = req.query;
-        let count = await getAllNoteQueryCount(_id, string, search, true, type, status, due, collectionSharedN);
+        const { string, _id, type, status, due } = req.query;
+        let count = await getAllNoteQueryCount(_id, string, true, type, status, due, collectionSharedN);
 
         return res.json({ noteCount: count });
     } catch (e) {
@@ -432,12 +430,12 @@ router.get('/searchNote', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedN, collectionNotes] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note'), await soda.createCollection('notes')
-        ];
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
 
-        const { limit, string, _id, search, type, status, due } = req.query;
-        let noteList = await getAllNoteQueryLimit(_id, limit, string, search, true, type, status, due, collectionSharedN, collectionNotes, collectionUser);
+        const { limit, string, _id, type, status, due } = req.query;
+        let noteList = await getAllNoteQueryLimit(_id, limit, string, true, type, status, due, collectionSharedN, collectionNotes, collectionUser);
 
         return res.json({ notes: noteList });
 
@@ -459,7 +457,7 @@ router.get('/updateNoteCount', JWT, async (req, res) => {
 
         const collectionNotes = await soda.createCollection('shrs_note');
 
-        let count = await getAllUptNoteCountS(req.token._id, false, collectionNotes);
+        let count = await getAllUptNoteCountS(req.token._id, true, collectionNotes);
         res.json({ noteCount: count });
     } catch (e) {
         console.log(e);
@@ -477,22 +475,23 @@ router.post('/delete', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedN, collectionNotes, collectionNotif] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note'), await soda.createCollection('notes'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
+        const collectionNotif = await soda.createCollection('notifs');
 
         const { sWith, noteId } = req.body;
-        [await deleteAssigned(sWith, noteId, collectionSharedN), await fileChangedU(noteId, [sWith], collectionNotif)];
-        const p1 = findNoteById(noteId, collectionNotes);
-        const p2 = getAllUserNoteIds(noteId, collectionSharedN, collectionUser);
-        const [note, arrId] = [await p1, await p2];
 
-        const p3 = getAllUserSharedCountP(note.org, arrId, req.token._id, collectionUser);
-        const p4 = getAllUserSharedLimitP(0, note.org, arrId, req.token._id, collectionUser);
-        const p5 = getAllAssignedCount(noteId, collectionSharedN);
-        const p6 = getAllAssignedLimit(noteId, 0, collectionSharedN, collectionUser);
-        const [userCount, userList, assignedCount, assignedList] = [await p3, await p4, await p5, await p6];
+        await deleteAssigned(sWith, noteId, collectionSharedN);
+        await fileChangedU(noteId, [sWith], collectionNotif);
+
+        let note = await findNoteById(noteId, collectionNotes);
+        let arrId = await getAllUserNoteIds(noteId, collectionSharedN, collectionUser);
+
+        let userCount = await getAllUserSharedCountP(note.org, arrId, req.token._id, collectionUser);
+        let userList = await getAllUserSharedLimitP(0, note.org, arrId, req.token._id, collectionUser);
+        let assignedCount = await getAllAssignedCount(noteId, collectionSharedN);
+        let assignedList = await getAllAssignedLimit(noteId, 0, collectionSharedN, collectionUser);
 
         res.json({ userCount: userCount, users: userList, assigned: assignedList, assignedCount: assignedCount });
     } catch (e) {
@@ -512,22 +511,23 @@ router.post('/deleteAll', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedN, collectionNotes, collectionNotif] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs_note'), await soda.createCollection('notes'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
+        const collectionNotif = await soda.createCollection('notifs');
 
         const { noteId } = req.body;
-        [await deleteAssignedAll(noteId, collectionSharedN), await fileChanged(noteId, collectionNotif)];
-        const p1 = findNoteById(noteId, collectionNotes);
-        const p2 = getAllUserNoteIds(noteId, collectionSharedN, collectionUser);
-        const [note, arrId] = [await p1, await p2];
 
-        const p3 = getAllUserSharedCountP(note.org, arrId, req.token._id, collectionUser);
-        const p4 = getAllUserSharedLimitP(0, note.org, arrId, req.token._id, collectionUser);
-        const p5 = getAllAssignedCount(noteId, collectionSharedN);
-        const p6 = getAllAssignedLimit(noteId, 0, collectionSharedN, collectionUser);
-        const [userCount, userList, assignedCount, assignedList] = [await p3, await p4, await p5, await p6];
+        await deleteAssignedAll(noteId, collectionSharedN);
+        await fileChanged(noteId, collectionNotif);
+
+        let note = await findNoteById(noteId, collectionNotes);
+        let arrId = await getAllUserNoteIds(noteId, collectionSharedN, collectionUser);
+
+        let userCount = await getAllUserSharedCountP(note.org, arrId, req.token._id, collectionUser);
+        let userList = await getAllUserSharedLimitP(0, note.org, arrId, req.token._id, collectionUser);
+        let assignedCount = await getAllAssignedCount(noteId, collectionSharedN);
+        let assignedList = await getAllAssignedLimit(noteId, 0, collectionSharedN, collectionUser);
 
         res.json({ userCount: userCount, users: userList, assigned: assignedList, assignedCount: assignedCount });
     } catch (e) {

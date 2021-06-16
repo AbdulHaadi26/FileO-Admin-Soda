@@ -1,5 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { connect } from 'react-redux';
 import Login from '../components/login';
-const lS = { display: 'flex', alignItems: 'Center', justifyContent: 'Center', minHeight: '100vh', maxWidth: '100vw' };
+import { getCurrentUser } from '../redux/actions/userActions';
 
-export default () => <div style={lS}> <Login /> </div>
+const LoginPage = ({ getCurrentUser, getOrganization }) => {
+
+    useEffect(() => {
+        if (localStorage.getItem('token') !== null) {
+            getCurrentUser();
+        }
+    }, [getCurrentUser]);
+
+    return <div style={{ display: 'flex', alignItems: 'Center', justifyContent: 'Center', minHeight: '100vh', maxWidth: '100vw' }}> <Login /> </div>
+};
+
+export default connect(null, { getCurrentUser })(LoginPage);

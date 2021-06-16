@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import '../../style.css';
 import { connect } from 'react-redux';
 import { fetchAssigned, fetchAssignedSearch, fetchEmp, fetchEmpSearch, deleteAssignedAll } from '../../../../redux/actions/sharedNotesAction';
@@ -8,35 +8,41 @@ const UserList = lazy(() => import('./userList'));
 const AssignedList = lazy(() => import('./assignedList'));
 const eS = { textAlign: 'center', marginTop: '20px', marginBottom: '20px' };
 const List = ({
-    id, fetchAssigned, fetchAssignedSearch, fetchEmp, fetchEmpSearch, nId, isSuc, empData, ALData, isSucA, string, string2, onhandleModal, isTask,
-    limit, limit2, limitMult, limitMult2, handleS, handleS2, handleL2, handleL, handleLM2, handleLM, deleteAssignedAll, type, setType, isL
+    id, fetchAssigned, fetchAssignedSearch, fetchEmp, fetchEmpSearch, nId, isSuc, 
+    empData, ALData, isSucA, onhandleModal, isTask, deleteAssignedAll, isL, isShow
 }) => {
+
+    const [string, setS] = useState(''), [limitMult, setLM] = useState(0), [limit, setL] = useState(12), [limitMult2, setLM2] = useState(0),
+        [limit2, setL2] = useState(12), [string2, setS2] = useState(''), [type, setType] = useState('Users');
 
     useEffect(() => {
         let data;
         if (type === 'Users') {
-            data = { limit: 0, nId: nId, offset: 0, _id: id };
+            data = {
+                limit: 0, nId, offset: 0, _id: id
+            };
             fetchEmp(data);
         } else {
-            data = { limit: 0, _id: nId };
+            data = {
+                limit: 0, _id: nId
+            };
             fetchAssigned(data);
         }
-
     }, [id, nId, fetchEmp, fetchAssigned, type]);
 
-    const onhandleS = e => handleS(e.target.value);
-    const onhandleS2 = e => handleS2(e.target.value);
+    const onhandleS = e => setS(e.target.value);
+    const onhandleS2 = e => setS2(e.target.value);
 
     const handleSearch = (e, num) => {
         e.preventDefault();
         let data;
         if (Number(num) === 2) {
             data = { limit: 0, nId: nId, string: string2, offset: 0, _id: id };
-            handleL(12); handleLM(0);
+            setL(12); setLM(0);
             string2 ? fetchEmpSearch(data) : fetchEmp(data);
         } else {
             data = { limit: 0, _id: nId, string: string };
-            handleL2(12); handleLM2(0);
+            setL2(12); setLM2(0);
             string ? fetchAssignedSearch(data) : fetchAssigned(data);
         }
     };
@@ -46,9 +52,11 @@ const List = ({
         let data, upgradeLimit;
         if (Number(num) === 2) {
             if ((limit < count && i > 0) || (limit > 12 && i < 0)) {
-                data = { limit: limitMult + i, nId: nId, string: string2, offset: 0, _id: id };
+                data = {
+                    limit: limitMult + i, nId: nId, string: string2, offset: 0, _id: id
+                };
                 upgradeLimit = limit + j;
-                handleL(upgradeLimit); handleLM(data.limit);
+                setL(upgradeLimit); setLM(data.limit);
                 string2 ? fetchEmpSearch(data) : fetchEmp(data);
             }
         }
@@ -56,7 +64,7 @@ const List = ({
             if ((limit2 < count2 && i > 0) || (limit2 > 12 && i < 0)) {
                 data = { limit: limitMult2 + i, string: string, _id: nId };
                 upgradeLimit = limit2 + j;
-                handleL2(upgradeLimit); handleLM2(data.limit);
+                setL2(upgradeLimit); setLM2(data.limit);
                 string ? fetchAssignedSearch(data) : fetchAssigned(data);
             }
         }
@@ -86,8 +94,8 @@ const List = ({
                     }
                 }} />
                 <select className="custom-select col-lg-3 col-5" value={type} onChange={e => setType(e.target.value)}>
-                    <option value={'Users'}>Users</option>
-                    <option value={'Assigned'}>Assigned</option>
+                    <option value={'Users'}>Share To</option>
+                    <option value={'Assigned'}>Shared With</option>
                 </select>
                 <div className="input-group-append">
                     <button className="btn btn-outline-secondary" type="button" onClick={e => handleSearch(e, type === 'Users' ? 2 : 1)} ><div className="faH" /></button>
@@ -101,23 +109,31 @@ const List = ({
                 {!isL && isSuc && list && count && count > 0 && list.length > 0 ?
                     <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '12px' }}>
                         <Suspense fallback={<></>}>
-                            <UserList list={list} count={count} id={id} nId={nId} onFetch={fetch} />
+                            <UserList isTask={isTask} list={list} count={count} id={id} nId={nId} onFetch={fetch} />
                         </Suspense>
                     </div> : !isL ? <h6 className="sh-n" style={eS}>No user found</h6> : <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '30px', marginBottom: '30px' }}>
                         <SimpleLoader />
                     </div>}
             </> : <>
-                    <h3 style={{ fontWeight: '600', fontSize: '14px' }}>Assigned</h3>
-                    {!isL && isSucA && count2 && count2 > 0 && listA && listA.length > 0 ? <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '12px' }}>
-                        <Suspense fallback={<></>}>
-                            <AssignedList list={listA} count={count2} nId={nId} id={id} onFetch={fetch} />
-                        </Suspense>
-                    </div> : !isL ? <h6 className="sh-n" style={eS}>No user found</h6> : <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '30px', marginBottom: '30px' }}>
-                        <SimpleLoader />
-                    </div>}
+                <h3 style={{ fontWeight: '600', fontSize: '14px' }}>Assigned</h3>
+                {!isL && isSucA && count2 && count2 > 0 && listA && listA.length > 0 ? <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '12px' }}>
+                    <Suspense fallback={<></>}>
+                        <AssignedList isTask={isTask} list={listA} count={count2} nId={nId} id={id} onFetch={fetch} />
+                    </Suspense>
+                </div> : !isL ? <h6 className="sh-n" style={eS}>No user found</h6> : <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '30px', marginBottom: '30px' }}>
+                    <SimpleLoader />
+                </div>}
 
-                </>}
+            </>}
         </div>
+        {(!count2 || count2 <= 0) && isShow && <>
+            <hr />
+            <div className="col-12" style={{ padding: '6px 12px', display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
+                <button className="btn btn-primary" type="button" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px', marginBottom: '12px' }} onClick={e => {
+                    onhandleModal();
+                }}>Continue Without Sharing</button>
+            </div>
+        </>}
     </Modal>
 }
 

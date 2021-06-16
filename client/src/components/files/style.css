@@ -29,36 +29,6 @@
     color: #e74c3c;
 }
 
-.f-w .dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: white;
-    min-width: 180px;
-    box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.33);
-    padding: 0;
-    flex-direction: column;
-    z-index: 9999 !important;
-    right: 2%;
-    top: 30px;
-}
-
-.f-w .dropdown-content .s-l {
-    margin: 0px;
-    display: block;
-    padding: 12px 12px 12px 12px;
-    text-decoration: none;
-    color: #2c3e50;
-    font-weight: 400;
-    font-size: 12px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-.f-w .dropdown-content .s-l:hover {
-    background-color: #f5f6fa;
-}
-
 .f-w .order-list {
     margin-top: 12px;
     margin-right: 12px;
@@ -77,55 +47,6 @@
 
 .f-w .word-count{
     font-size: 12px;
-}
-
-.f-w .order {
-    width: 32px;
-    height: 32px;
-    margin-top: 24px;
-    margin-right: 12px;
-    background-color: #dfe6e9;
-    padding: 8px;
-    border-radius: 24px;
-    cursor: pointer;
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.f-w .orderA {
-    background-color: #b2bec3;
-}
-
-.f-w .order span {
-    display: none;
-    background-color: #dff9fb;
-    color: #000;
-    padding: 12px;
-    text-align: left;
-    border-radius: 2px;
-    position: absolute;
-    line-height: 1.6em;
-    z-index: 1;
-    width: 100px;
-    bottom: 100%;
-    z-index: 9999;
-    left: 50%;
-    box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.25), 0 2px 6px 0 rgba(0, 0, 0, 0.34);
-    margin-left: -50px;
-    margin-bottom: 4px;
-    font-size: 12px;
-    border: 1px solid #58B19F;
-    font-weight: 400;
-}
-
-.f-w .order:hover span {
-    display: block;
-}
-
-.f-w .order:hover, .f-w .order-list:hover {
-    background-color: #b2bec3;
 }
 
 .f-w .desc {
@@ -150,10 +71,6 @@
     color: white;
 }
 
-.f-w .input-group {
-    width: 50%;
-}
-
 .f-w .opt {
     margin-top: 24px;
     margin-bottom: 12px;
@@ -172,6 +89,7 @@
 }
 
 .f-v-w {
+    margin-top: 12px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;

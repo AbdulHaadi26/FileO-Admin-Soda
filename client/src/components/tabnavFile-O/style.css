@@ -1,0 +1,14 @@
+.tabNav{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    border-bottom: 2px solid #dfe6e9;
+}
+
+.tabNav .item {
+  text-transform: capitalize;
+  font-size: 14px;
+  margin-top: 12px;
+  cursor: pointer;
+}

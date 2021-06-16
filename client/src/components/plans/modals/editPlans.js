@@ -4,7 +4,7 @@ import { updatePlanDetails } from '../../../redux/actions/planActions';
 import Modal from '../../containers/modalBgContainer';
 const iG = { marginTop: '12px', width: '100%' };
 
-const Edit = ({ onhandleModal, getList, Plan, updatePlanDetails }) => {
+const Edit = ({ onhandleModal, Plan, updatePlanDetails, getList, isUpt }) => {
     const [text, setText] = useState(Plan.name), [date, setDate] = useState(Plan.started);
 
     const addHours = function (date, h) {
@@ -12,16 +12,14 @@ const Edit = ({ onhandleModal, getList, Plan, updatePlanDetails }) => {
         return date;
     };
 
-    let dateMin = new Date(Date.now());
-    dateMin = addHours(dateMin, (-(dateMin.getDay() - 1) * 24))
-    dateMin = new Date(dateMin);
+    let dateMin = new Date(Plan.started);
     dateMin = dateMin.toISOString().slice(0, 10);
 
     const handleUpdate = async (e) => {
         e.preventDefault();
         let form = { _id: Plan._id, name: text, date };
         await updatePlanDetails(form);
-        getList();
+        isUpt && getList();
     }
 
     return <Modal handleModal={onhandleModal} isOpt={true}>

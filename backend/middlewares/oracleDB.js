@@ -8,13 +8,12 @@ initClient();
 
 async function initClient() {
     try {
-
-        //oracledb.initOracleClient({ libDir: '/home/ubuntu/instantclient', configDir: '/home/ubuntu/instantclient/network/admin' });
-        oracledb.initOracleClient({ libDir: 'c://instantclient', configDir: 'c://instantClient/network/admin' });
+        //oracledb.initOracleClient({ libDir: '/usr/lib/oracle/19.9/client64/lib', configDir: '/usr/lib/oracle/19.9/client64/lib/network/admin' });
+oracledb.initOracleClient({ libDir: 'c://instantclient', configDir: 'c://instantClient/network/admin2' });
         pool = await oracledb.createPool({
-            user: "admin",
-            password: "@dmin2020!Isb#",
-            connectString: 'fileo_high',
+            user: "FILEOUSER",
+            password: "u$er202!Isb#demo",
+            connectString: 'demofileo_low',
             poolIncrement: 0,
             poolMax: 16,
             poolMin: 4
@@ -33,7 +32,7 @@ async function closeConnection(connection) {
     try {
         return await connection.close();
     } catch (e) {
-       // console.log(e);
+        console.log(e);
     }
 }
 

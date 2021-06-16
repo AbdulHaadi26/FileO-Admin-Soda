@@ -13,7 +13,7 @@ const Add = ({ registerFileNew, id, userId, pId, setting, fl, verId, onhandleMod
 
     const [_id, setId] = useState(''), [name, setN] = useState(''), [tempId, setTI] = useState(''), [size, setS] = useState(0), [mimeT, setMT] = useState(''), [fName, setFN] = useState(''),
         [type, setT] = useState(''), [value, setV] = useState(''), [file, setF] = useState(''), [fS, setFS] = useState(false), [errF, setErrF] = useState(false),
-        [errB, setErrB] = useState(false), [errS, setErrS] = useState(false), [description, setDescription] = useState(''), [sId, setSId] = useState(''), [version, setVer] = useState(0);
+        [errB, setErrB] = useState(false), [errS, setErrS] = useState(false), [description, setDescription] = useState('');
 
     let fileSize = setting && setting.setting && setting.setting.maxFileSize ? setting.setting.maxFileSize : 5;
 
@@ -26,7 +26,6 @@ const Add = ({ registerFileNew, id, userId, pId, setting, fl, verId, onhandleMod
         if (fl && fl.file && fl.versions && fl.versions.length > 0) {
             const { file } = fl;
             setN(file.name); setTI(file.category._id); setId(file._id);
-            setVer(fl.versions.length - 1); setSId(fl.versions[fl.versions.length - 1]._id);
         }
     }, [fl, setN, setTI, setId]);
 
@@ -34,14 +33,15 @@ const Add = ({ registerFileNew, id, userId, pId, setting, fl, verId, onhandleMod
 
     const handleSubmit = e => {
         e.preventDefault();
-        if (name && fS && !errB && mimeT) {
+        if (name && fS && !errB) {
             setErrB(false); setErrF(false);
-            let data = { _id: sId, name: name, size: size, mime: mimeT, postedby: userId, org: id, category: tempId, active: true, version: version, type: type, fileId: _id, pId: pId, description: description ? description : '', fName: fName, isVersion: version !== 0 };
+            let data = { _id: verId, name: name, size: size, mime: mimeT, postedby: userId, org: id, category: tempId, active: true, type: type, fileId: _id, pId: pId, description: description ? description : '', fName: fName };
+            onhandleModal();
             registerFileNew(data, file);
         } else {
             !fS && setErrS(true);
         }
-    }
+    };
 
     const handleFilePreview = e => {
         if (e.target.files && e.target.files[0]) {
@@ -56,7 +56,7 @@ const Add = ({ registerFileNew, id, userId, pId, setting, fl, verId, onhandleMod
                 setMT(file.type); setFN(file.name);
             } else setErrF(true);
         }
-    }
+    };
 
     return <Modal handleModal={onhandleModal}>
         <h3 style={{ fontWeight: '600', fontSize: '18px', marginTop: '12px', marginBottom: '12px', padding: '6px 12px' }}>Replace Newest Version</h3>
@@ -82,7 +82,6 @@ const Add = ({ registerFileNew, id, userId, pId, setting, fl, verId, onhandleMod
                 onhandleModal();
             }}>Cancel</button>
             <button className="btn btn-primary" type="button" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
-                onhandleModal();
                 handleSubmit(e);
             }}>Upload</button>
         </div>

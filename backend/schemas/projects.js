@@ -2,7 +2,9 @@ module.exports = {
 
     createProject: async (projData, collection) => {
         try {
-            await collection.insertOneAndGet(projData);
+            let doc = await collection.insertOneAndGet(projData);
+            if (doc && doc.key) return doc.key;
+            throw new Error('Project could not be created');
         } catch (e) {
             throw new Error(e.message);
         }

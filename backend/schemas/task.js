@@ -6,7 +6,9 @@ module.exports = {
 
     createTask: async (data, collection) => {
         try {
-            await collection.insertOneAndGet(data);
+            let doc = await collection.insertOneAndGet(data);
+            if(!doc) throw new Error('Task could not be created');
+            return doc.key;
         } catch (e) {
             throw new Error(e.message);
         }
@@ -14,9 +16,23 @@ module.exports = {
 
     findNoteByName: async (name, _id, value, collection) => {
         try {
-            const doc = await collection.find().fetchArraySize(0).filter({ userId: _id, title: name, isTask: { $eq: value } }).getOne();
-            if (!doc) return false;
-            return true;
+            const doc = await collection.find().fetchArraySize(0).filter({ postedby: _id, title: name, isTask: { $eq: value } }).getOne();
+            if (doc)
+                return true;
+            return false;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateNoteN: async (key, userId, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+            var note = docToReplace.getContent();
+            note.postedby = userId;
+            await collection.find().fetchArraySize(0).key(key).replaceOne(note);
+            return note;
         } catch (e) {
             throw new Error(e.message);
         }
@@ -128,13 +144,12 @@ module.exports = {
     },
 
 
-    updateNote: async (key, title, text, color, fileList, recId, editable, catList, status, due, collection) => {
+    updateNote: async (key, title, color, fileList, recId, editable, catList, status, due, icon, collection) => {
         try {
             let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
             if (!docToReplace) return false;
             var note = docToReplace.getContent();
             note.title = title;
-            note.text = text;
             note.color = color;
             note.attachment = fileList;
             note.recId = recId;
@@ -143,6 +158,7 @@ module.exports = {
             note.status = status;
             note.due = due;
             note.time_due = new Date(due);
+            note.icon = icon;
             await collection.find().fetchArraySize(0).key(key).replaceOne(note);
         } catch (e) {
             throw new Error(e.message);
@@ -236,8 +252,8 @@ module.exports = {
                         dateL.setHours(0, 0, 0, 0);
                         dateL.setDate(31);
                         dateR.setDate(31);
-                        dateR.setMonth(date.getMonth() + 0);
-                        dateL.setMonth(date.getMonth() + 1);
+                        dateR.setMonth(dateR.getMonth() + 0);
+                        dateL.setMonth(dateL.getMonth() + 1);
                         doc = await collection.find().filter({ postedby: _id, isTask: { $eq: value }, time_due: { $lte: dateL, $gte: dateR } }).count();
                     } else {
                         doc = await collection.find().filter({ postedby: _id, isTask: { $eq: value }, time_due: { $lt: date } }).count();
@@ -304,10 +320,10 @@ module.exports = {
                         let dateR = new Date(Date.now()), dateL = new Date(Date.now());;
                         dateR.setHours(0, 0, 0, 0);
                         dateL.setHours(0, 0, 0, 0);
-                        dateR.setDate(31);
                         dateL.setDate(31);
-                        dateR.setMonth(date.getMonth() + 0);
-                        dateL.setMonth(date.getMonth() + 1);
+                        dateR.setDate(31);
+                        dateR.setMonth(dateR.getMonth() + 0);
+                        dateL.setMonth(dateL.getMonth() + 1);
                         doc = await collection.find().filter({ $query: { postedby: _id, isTask: { $eq: value }, time_due: { $lte: dateL, $gte: dateR } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
                     } else {
                         doc = await collection.find().filter({ $query: { postedby: _id, isTask: { $eq: value }, time_due: { $lt: date } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
@@ -379,8 +395,8 @@ module.exports = {
                         dateL.setHours(0, 0, 0, 0);
                         dateL.setDate(31);
                         dateR.setDate(31);
-                        dateR.setMonth(date.getMonth() + 0);
-                        dateL.setMonth(date.getMonth() + 1);
+                        dateR.setMonth(dateR.getMonth() + 0);
+                        dateL.setMonth(dateL.getMonth() + 1);
                         doc = await collection.find().filter({ postedby: _id, isTask: { $eq: value }, time_due: { $lte: dateL, $gte: dateR } }).count();
                     } else {
                         doc = await collection.find().filter({ postedby: _id, isTask: { $eq: value }, time_due: { $lt: date } }).count();
@@ -448,10 +464,10 @@ module.exports = {
                         let dateR = new Date(Date.now()), dateL = new Date(Date.now());;
                         dateR.setHours(0, 0, 0, 0);
                         dateL.setHours(0, 0, 0, 0);
-                        dateR.setDate(31);
                         dateL.setDate(31);
-                        dateR.setMonth(date.getMonth() + 0);
-                        dateL.setMonth(date.getMonth() + 1);
+                        dateR.setDate(31);
+                        dateR.setMonth(dateR.getMonth() + 0);
+                        dateL.setMonth(dateL.getMonth() + 1);
                         doc = await collection.find().filter({ $query: { postedby: _id, isTask: { $eq: value }, time_due: { $lte: dateL, $gte: dateR } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
                     } else {
                         doc = await collection.find().filter({ $query: { postedby: _id, isTask: { $eq: value }, time_due: { $lt: date } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();

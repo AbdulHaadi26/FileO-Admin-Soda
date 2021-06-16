@@ -7,14 +7,20 @@ const List = lazy(() => import('../../components/employee/listDTM'));
 const ListPage = ({ match, profile, fetchEmp, isL, isErr, emp, getEmployee }) => {
     const { id, _id } = match.params;
     const [started, setStarted] = useState(0), [string, setS] = useState(''), [offsetMult, setOFM] = useState(0), [limit, setL] = useState(12),
-     [limitMult, setLM] = useState(0), [sEmp, setEmp] = useState(''), [type, setT] = useState('Name'), [tabNav, setTN] = useState(0);
+        [limitMult, setLM] = useState(0), [sEmp, setEmp] = useState(''), [type, setT] = useState('Name'), [tabNav, setTN] = useState(0);
 
     useEffect(() => {
-        const data = { offset: 0, limit: 0, _id: id, skipId: _id, type: 'name' };
-        const data2 = { _id: _id, org: id };
-        getEmployee(data2);
-        fetchEmp(data);
-        setStarted(1);
+        async function fetch() {
+            let data = { offset: 0, limit: 0, _id: id, skipId: _id, type: 'name' };
+            await fetchEmp(data);
+
+            data = { _id: _id, org: id };
+            await getEmployee(data);
+
+            setStarted(1);
+        }
+
+        fetch();
     }, [fetchEmp, id, _id, setStarted, getEmployee]);
 
     const onhandleL = n => setL(n);
@@ -24,9 +30,9 @@ const ListPage = ({ match, profile, fetchEmp, isL, isErr, emp, getEmployee }) =>
     const onhandleEmp = emp => setEmp(emp);
     const onhandleT = n => setT(n)
 
-    return <Container profile={profile} isErr={isErr && started > 0} isSuc={!isL && emp && emp.user && started > 0} eT={'Employee Not Found'} num={10}> 
-    {emp && emp.user && <List id={id} _id={_id} sEmp={sEmp} handleEmp={onhandleEmp} emp={emp.user} offsetMult={offsetMult} string={string} type={type} limitMult={limitMult} limit={limit}
-    tabNav={tabNav} setTN={setTN} handleT={onhandleT} handleS={onhandleS} handleLM={onhandleLM} handleL={onhandleL} handleOFM={onhandleOFM} />}</Container>
+    return <Container profile={profile} isErr={isErr && started > 0} isSuc={!isL && emp && emp.user && started > 0} eT={'Employee Not Found'} num={10}>
+        {emp && emp.user && <List id={id} _id={_id} sEmp={sEmp} handleEmp={onhandleEmp} emp={emp.user} offsetMult={offsetMult} string={string} type={type} limitMult={limitMult} limit={limit}
+            tabNav={tabNav} setTN={setTN} handleT={onhandleT} handleS={onhandleS} handleLM={onhandleLM} handleL={onhandleL} handleOFM={onhandleOFM} />}</Container>
 }
 
 const mapStateToProps = state => {

@@ -10,9 +10,13 @@ const ListPage = ({ match, profile, fetchEmp, isL }) => {
         [tabNav, setTN] = useState(0), [limitMult, setLM] = useState(0), [type, setT] = useState('Name');
 
     useEffect(() => {
-        const data = { offset: 0, limit: 0, _id: id, type: 'name' };
-        fetchEmp(data);
-        setStarted(1);
+        async function fetch() {
+            let data = { offset: 0, limit: 0, _id: id, type: 'name' };
+            await fetchEmp(data);
+            setStarted(1);
+        }
+
+        fetch();
     }, [fetchEmp, id, setStarted]);
 
     const onhandleL = n => setL(n);
@@ -21,8 +25,8 @@ const ListPage = ({ match, profile, fetchEmp, isL }) => {
     const onhandleOFM = n => setOFM(n);
     const onhandleT = n => setT(n)
 
-    return <Container profile={profile} isSuc={!isL && started > 0} num={10}> <List id={id} offsetMult={offsetMult} string={string} type={type} limitMult={limitMult} limit={limit} 
-    tabNav={tabNav} setTN={setTN} handleT={onhandleT} handleS={onhandleS} handleLM={onhandleLM} handleL={onhandleL} handleOFM={onhandleOFM} /> </Container>
+    return <Container profile={profile} isSuc={!isL && started > 0} num={10}> <List id={id} offsetMult={offsetMult} string={string} type={type} limitMult={limitMult} limit={limit}
+        tabNav={tabNav} setTN={setTN} handleT={onhandleT} handleS={onhandleS} handleLM={onhandleLM} handleL={onhandleL} handleOFM={onhandleOFM} /> </Container>
 }
 
 const mapStateToProps = state => {

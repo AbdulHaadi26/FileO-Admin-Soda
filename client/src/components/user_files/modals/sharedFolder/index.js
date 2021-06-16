@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { fetchAssigned, fetchAssignedSearch, fetchEmp, fetchEmpSearch, deleteAssignedAll } from '../../../../redux/actions/sharedCatActions';
 import Modal from '../../../containers/modalBgContainer';
@@ -8,12 +8,14 @@ const AssignedList = lazy(() => import('./assignedList'));
 const eS = { textAlign: 'center', marginTop: '20px', marginBottom: '20px' };
 
 const List = ({
-    id, fetchAssigned, fetchAssignedSearch, fetchEmp, fetchEmpSearch, cId, isSuc, empData, ALData, isSucA, string, string2, onhandleModal,
-    limit, limit2, limitMult, limitMult2, handleS, handleS2, handleL2, handleL, handleLM2, handleLM, deleteAssignedAll, type, setType, isL
+    id, fetchAssigned, fetchAssignedSearch, fetchEmp, fetchEmpSearch, cId, isSuc, empData, ALData, isSucA, onhandleModal, deleteAssignedAll, isL
 }) => {
 
-    const onhandleS = e => handleS(e.target.value);
-    const onhandleS2 = e => handleS2(e.target.value);
+    const [string, setS] = useState(''), [limitMult, setLM] = useState(0), [limit, setL] = useState(12), [limitMult2, setLM2] = useState(0),
+        [limit2, setL2] = useState(12), [string2, setS2] = useState(''), [type, setType] = useState('Users');
+
+    const onhandleS = e => setS(e.target.value);
+    const onhandleS2 = e => setS2(e.target.value);
 
     useEffect(() => {
         let data;
@@ -32,11 +34,11 @@ const List = ({
         let data;
         if (Number(num) === 2) {
             data = { cId: cId, string: string2, offset: 0, _id: id };
-            handleL(12); handleLM(0);
+            setL(12); setLM(0);
             string2 ? fetchEmpSearch(data) : fetchEmp(data);
         } else {
             data = { limit: 0, _id: cId, string: string };
-            handleL2(12); handleLM2(0);
+            setL2(12); setLM2(0);
             string ? fetchAssignedSearch(data) : fetchAssigned(data);
         }
     }
@@ -48,14 +50,14 @@ const List = ({
             if ((limit < count && i > 0) || (limit > 12 && i < 0)) {
                 data = { offset: limitMult + i, cId: cId, string: string2, _id: id };
                 upgradeLimit = limit + j;
-                handleL(upgradeLimit); handleLM(data.limit);
+                setL(upgradeLimit); setLM(data.limit);
                 string2 ? fetchEmpSearch(data) : fetchEmp(data);
             }
         } else {
             if ((limit2 < count2 && i > 0) || (limit2 > 12 && i < 0)) {
                 data = { limit: limitMult2 + i, string: string, _id: cId };
                 upgradeLimit = limit2 + j;
-                handleL2(upgradeLimit); handleLM2(data.limit);
+                setL2(upgradeLimit); setLM2(data.limit);
                 string ? fetchAssignedSearch(data) : fetchAssigned(data);
             }
         }
@@ -85,8 +87,8 @@ const List = ({
                     }
                 }} />
                 <select className="custom-select col-lg-3 col-5" value={type} onChange={e => setType(e.target.value)}>
-                    <option value={'Users'}>Users</option>
-                    <option value={'Assigned'}>Assigned</option>
+                    <option value={'Users'}>Share To</option>
+                    <option value={'Assigned'}>Shared With</option>
                 </select>
                 <div className="input-group-append">
                     <button className="btn btn-outline-secondary" type="button" onClick={e => handleSearch(e, type === 'Users' ? 2 : 1)} ><div className="faH" /></button>

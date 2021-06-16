@@ -116,26 +116,14 @@ module.exports = {
         }
     },
 
-    getAllCatCount: async (_id, collection) => {
-        try {
-            const doc = await collection.find().filter({ uId: _id, isChild: { $ne: true } }).count();
-            if (doc) return doc.count;
-            return 0;
-        } catch (e) {
-            throw new Error(e.message);
-        }
-    },
-
-    getAllCatLimit: async (_id, limit, collection) => {
+    getAllCatLimit: async (_id, cat, catId, collection) => {
         try {
             let cats = [];
-            let skipInNumber = Number(limit);
-            skipInNumber = skipInNumber * 12
-            const doc = await collection.find().filter({ $query: { uId: _id, isChild: { $ne: true } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
+            const doc = await collection.find().filter({ uId: _id, parentCat: catId }).getDocuments();
             if (doc) doc.map(document => {
                 let content = document.getContent();
                 content._id = document.key;
-                cats.push(content);
+                cat !== content._id && cats.push(content);
             });
             return cats;
         } catch (e) {
@@ -143,26 +131,15 @@ module.exports = {
         }
     },
 
-    getAllQueryCatCount: async (_id, string, collection) => {
-        try {
-            const doc = await collection.find().filter({ uId: _id, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).count();
-            if (doc) return doc.count;
-            return 0;
-        } catch (e) {
-            throw new Error(e.message);
-        }
-    },
 
-    getAllQueryCatLimit: async (_id, limit, string, collection) => {
+    getAllQueryCatLimit: async (_id, cat, catId, string, collection) => {
         try {
             let cats = [];
-            let skipInNumber = Number(limit);
-            skipInNumber = skipInNumber * 12
-            const doc = await collection.find().filter({ $query: { uId: _id, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
+            const doc = await collection.find().filter({ uId: _id, parentCat: catId, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
             if (doc) doc.map(document => {
                 let content = document.getContent();
                 content._id = document.key;
-                cats.push(content);
+                cat !== content._id && cats.push(content);
             });
             return cats;
         } catch (e) {
@@ -211,10 +188,39 @@ module.exports = {
         }
     },
 
+    getAllCatLimitCombinedUSPL: async (_id, string, collection) => {
+        try {
+            let cats = [];
+            const doc = await collection.find().filter({ uId: _id, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).limit(15).getDocuments();
+            if (doc) doc.map(document => {
+                let content = document.getContent();
+                content._id = document.key;
+                cats.push(content);
+            });
+            return cats;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getMaxHirerchy: async (catId, collection) => {
+        try {
+            let len = 0;
+            const doc = await collection.find().filter({ pCat: { $in: [catId] } }).getDocuments();
+            if (doc) doc.map(docu => {
+                let document = docu.getContent();
+                if (document.pCat && document.pCat.length > 0 && document.pCat.length > len) len = document.pCat.length;
+            });
+            return len;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
     getAllCatLimitCombinedU: async (_id, catId, collection) => {
         try {
             let cats = [];
-            const doc = await collection.find().filter({ uId: _id, parentCat: catId, isChild: { $eq: true } }).getDocuments();
+            const doc = await collection.find().filter({ uId: _id, parentCat: catId }).getDocuments();
             if (doc) doc.map(document => {
                 let content = document.getContent();
                 content._id = document.key;
@@ -229,7 +235,7 @@ module.exports = {
     getAllCatLimitCombinedUS: async (_id, catId, string, collection) => {
         try {
             let cats = [];
-            const doc = await collection.find().filter({ uId: _id, parentCat: catId, isChild: { $eq: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
+            const doc = await collection.find().filter({ uId: _id, parentCat: catId, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
             if (doc) doc.map(document => {
                 let content = document.getContent();
                 content._id = document.key;
@@ -300,6 +306,43 @@ module.exports = {
         }
     },
 
+    updateCategory: async (key, parentCat, pCat, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+
+            let document = docToReplace.getContent();
+            document.parentCat = parentCat;
+            document.pCat = pCat;
+            document.isChild = parentCat ? true : false
+            document.last_updated = new Date(Date.now());
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateAllChildPCat: async (key, tempR, parentCat, collection) => {
+        try {
+            let doc = await collection.find().filter({ pCat: { $in: [key] } }).getDocuments();
+
+            if (doc) {
+                await Promise.all(doc.map(async docToReplace => {
+                    let document = docToReplace.getContent();
+                    let pCats = document.pCat ? document.pCat : [];
+                    pCats = pCats.filter(i => !tempR.includes(i));
+                    pCats = parentCat.concat(pCats);
+                    document.pCat = pCats;
+                    await collection.find().fetchArraySize(0).key(docToReplace.key).replaceOne(document);
+                }));
+            }
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
     getAllUptCatCountSC: async (_id, collection) => {
         try {
             const doc = await collection.find().filter({ uId: _id, updated: true }).count();
@@ -327,7 +370,7 @@ module.exports = {
 
     updateCatUptST: async (key, collection) => {
         try {
-            if(!key) return false; 
+            if (!key) return false;
             let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
             if (!docToReplace) return false;
 

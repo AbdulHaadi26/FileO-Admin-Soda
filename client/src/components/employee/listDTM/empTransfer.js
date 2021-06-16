@@ -14,21 +14,17 @@ const EmpT = ({ Emp, sEmp, transferData, id }) => {
     }
 
     return <>
-        <div className="div-t">
-            <div className="col-lg-3 col-12 mEW p-0">
-                <div className="col-lg-11 col-12 eIW">
-                    <img src={!Emp.image ? User : `${Emp.image}`} alt="compnay" />
-                    <h6 className="e-n">{Emp.name}</h6>
-                    <h6 className="e-r">{Emp.roles && Emp.roles.name}</h6>
-                </div>
+        <div className="div-t" style={{ marginTop: '30px' }}>
+            <div className="col-lg-2 col-4 mFWS">
+                <img src={!Emp.image ? User : `${Emp.image}`} alt="compnay" style={{ width: '50px', height: '50px', borderRadius: '1000px' }} />
+                <h6 style={{ wordBreak: 'break-all', fontSize: '14px' }}>{Emp.name}</h6>
+                <h6 style={{ wordBreak: 'break-all', fontSize: '12px' }}>{Emp.userType === 2 ? 'Administrator' : Emp.userType === 1 ? 'Project Manager' : 'User'}</h6>
             </div>
             <span className="exchange" />
-            <div className="col-lg-3 col-12 mEW p-0">
-                <div className="col-lg-11 col-12 eIW">
-                    <img src={!sEmp.image ? User : `${sEmp.image}`} alt="compnay" />
-                    <h6 className="e-n">{sEmp.name ? sEmp.name : 'Name'}</h6>
-                    <h6 className="e-r">{sEmp.roles ? sEmp.roles.name : 'Role'}</h6>
-                </div>
+            <div className="col-lg-2 col-4 mFWS">
+                <img src={!sEmp.image ? User : `${sEmp.image}`} alt="compnay" style={{ width: '50px', height: '50px', borderRadius: '1000px' }} />
+                <h6 style={{ wordBreak: 'break-all', fontSize: '14px' }}>{sEmp.name}</h6>
+                <h6 style={{ wordBreak: 'break-all', fontSize: '12px' }}>{sEmp.userType === 2 ? 'Administrator' : sEmp.userType === 1 ? 'Project Manager' : 'User'}</h6>
             </div>
         </div>
         <div className="div-t">

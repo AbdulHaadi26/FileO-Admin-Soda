@@ -11,7 +11,7 @@ const tS = { resize: 'none', height: '60px' };
 
 const Add = ({ setting, registerFileVer, id, pId, userId, fl, verId, onhandleModal, getFileDetailsM }) => {
 
-    const [version, setVer] = useState(''), [name, setN] = useState(''), [tempId, setTI] = useState(''), [size, setS] = useState(0), [mimeT, setMT] = useState(''),
+    const [name, setN] = useState(''), [tempId, setTI] = useState(''), [size, setS] = useState(0), [mimeT, setMT] = useState(''),
         [type, setT] = useState(''), [value, setV] = useState(''), [file, setF] = useState(''), [fS, setFS] = useState(''), [fName, setFN] = useState(''),
         [errF, setErrF] = useState(false), [errB, setErrB] = useState(false), [errS, setErrS] = useState(false), [description, setDescription] = useState('');
 
@@ -25,17 +25,18 @@ const Add = ({ setting, registerFileVer, id, pId, userId, fl, verId, onhandleMod
     useEffect(() => {
         if (fl && fl.file) {
             const { file } = fl
-            setN(file.name); setTI(file.category._id); setVer(fl.versions.length)
+            setN(file.name); setTI(file.category._id);
         }
-    }, [fl, setN, setTI, setVer]);
+    }, [fl, setN, setTI]);
 
     const onhandleInputA = e => e.target.value.split(' ').length <= 500 && setDescription(e.target.value);
 
     function handleSubmit(e) {
         e.preventDefault();
-        if (name && fS && !errB && mimeT) {
+        if (name && fS && !errB) {
             setErrB(false); setErrF(false);
-            let data = { _id: verId, version: version, mime: mimeT, name: name, size: size, postedby: userId, org: id, category: tempId, active: true, type: type, pId: pId, description: description ? description : '', fName: fName };
+            let data = { _id: verId, mime: mimeT, name: name, size: size, postedby: userId, org: id, category: tempId, active: true, type: type, pId: pId, description: description ? description : '', fName: fName };
+            onhandleModal();
             registerFileVer(data, file);
         } else {
             !fS && setErrS(true);
@@ -80,7 +81,6 @@ const Add = ({ setting, registerFileVer, id, pId, userId, fl, verId, onhandleMod
                 onhandleModal();
             }}>Cancel</button>
             <button className="btn btn-primary" type="button" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
-                onhandleModal();
                 handleSubmit(e);
             }}>Upload</button>
         </div>

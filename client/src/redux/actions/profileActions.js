@@ -1,9 +1,9 @@
-import { modalConstants, userConstants, fileConstants, noteConstants, catConstants, taskConstants } from "../constants";
+import { modalConstants, userConstants, fileConstants, noteConstants, catConstants, taskConstants, pollConstants } from "../constants";
 import api from '../../utils/api';
-import history from '../../utils/history';
 import Token from './token';
 import axios from 'axios';
-const { GPErr, GPSuc, SideNav, GPReqS } = userConstants;
+import { getProfile, logOut } from "./userActions";
+const { GPErr, SideNav, GPReqS } = userConstants;
 const { MHide, MShow, NTMHide, NTMShow } = modalConstants;
 
 export const ModalHide = () => async dispatch => dispatch({ type: MHide });
@@ -36,8 +36,12 @@ export const getAllCounts = () => async dispatch => {
             dispatch({ type: taskConstants.NTCountS, payload: res.data.countST });
             dispatch({ type: taskConstants.NTCount, payload: res.data.countT });
             dispatch({ type: catConstants.CCountM, payload: res.data.countM });
+            dispatch({ type: pollConstants.PCount, payload: res.data.countP });
         }
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const updateProfile = data => async dispatch => {
@@ -46,11 +50,13 @@ export const updateProfile = data => async dispatch => {
         Token();
         var res = await api.post("/account/updateProfile", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         if (res.data.user && !res.data.error) {
-            dispatch({ type: GPSuc, payload: res.data });
             dispatch(ModalProcess({ title: 'User', text: 'Profile details has been updated.' }));
-            history.push('/user/profile');
+            dispatch(getProfile());
         } else dispatch({ type: GPErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const uploadImage = (data, file, _id) => async dispatch => {
@@ -63,12 +69,14 @@ export const uploadImage = (data, file, _id) => async dispatch => {
             var userData = { _id: _id, key: res1.data.key };
             var res = await api.post(`/account/uploadImage`, userData, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
             if (res.data.user && !res.data.error) {
-                dispatch({ type: GPSuc, payload: res.data });
+                dispatch(getProfile())
                 dispatch(ModalProcess({ title: 'User', text: 'Profile details has been updated.' }));
-                history.push('/user/profile');
             } else dispatch({ type: GPErr });
         } else dispatch({ type: GPErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const setSN = num => async dispatch => {

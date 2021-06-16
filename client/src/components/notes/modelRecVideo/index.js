@@ -12,10 +12,10 @@ const fS = { position: 'fixed', zIndex: '9998', minHeight: '100vh', backgroundCo
 const pS = { position: 'fixed', zIndex: '9999' };
 const mS = { width: '100%', textAlign: 'center', marginTop: '12px', fontSize: '18px', fontWeight: '400', display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' };
 const dF = { display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', width: '100%' };
-const btN = { display: 'flex', flexDirection: 'row', alignItems: 'center' };
+const btN = { display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '12px' };
 let stream, recorder, chunks = [], id;
 
-const Modal = ({ per, fData, isL, isUpt, registerRec, clearFile, onhandleModal, onSubmit, noteName }) => {
+const Modal = ({ per, fData, isL, isUpt, registerRec, clearFile, onhandleModal, onSubmit, noteName, isTask }) => {
     const [status, setS] = useState(0), [fileData, setFD] = useState(''), [blob, setBLOB] = useState(''), [count, setCount] = useState(0), vidRef = useRef(null), vidLive = useRef(null);
 
     useEffect(() => {
@@ -99,7 +99,7 @@ const Modal = ({ per, fData, isL, isUpt, registerRec, clearFile, onhandleModal, 
         onSubmit(fData);
     }
 
-    const attachRec = () => registerRec(fileData, blob);
+    const attachRec = () => registerRec(fileData, blob, isTask);
 
     return <>
         <div style={fS} onClick={e => onhandleModal(e, false)} ></div>

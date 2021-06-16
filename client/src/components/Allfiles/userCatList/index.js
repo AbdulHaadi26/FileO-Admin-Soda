@@ -13,18 +13,37 @@ import { fetchCombinedCP } from '../../../redux/actions/categoryActions';
 import { fetchCombined } from '../../../redux/actions/userCategoryActions';
 import { fetchCombinedC } from '../../../redux/actions/clientCategoryAction';
 import { fetchCombinedPM } from '../../../redux/actions/project_categoryActions';
+import GAdminFiles from '../../../assets/tabnav/G-admin files.svg';
+import BAdminFiles from '../../../assets/tabnav/B-admin files.svg';
+import GProj from '../../../assets/tabnav/G-Projects.svg';
+import BProj from '../../../assets/tabnav/B-Projects.svg';
+import GMySpace from '../../../assets/tabnav/G-hard-drive.svg';
+import BMySpace from '../../../assets/tabnav/B-hard-drive.svg';
+import GClient from '../../../assets/tabnav/G-hand-shake.svg';
+import BClient from '../../../assets/tabnav/B-hand-shake.svg';
 import history from '../../../utils/history';
+import Searchbar from '../../searchbarReusable';
 const FileList = lazy(() => import('./fileList'));
 const CatList = lazy(() => import('./catList'));
-const dF = { display: 'flex', justifyContent: 'flex-end' };
-const eS = { textAlign: 'center', marginTop: '50px', marginBottom: '80px', width: '100%' };
-const mT = { marginTop: '16px' };
+const eS = {
+    textAlign: 'center',
+    marginTop: '50px',
+    marginBottom: '80px',
+    width: '100%'
+};
+
+let icons = [
+    { G: GAdminFiles, B: BAdminFiles },
+    { G: GProj, B: BProj },
+    { G: GMySpace, B: BMySpace },
+    { G: GClient, B: BClient }
+];
 
 const List = ({
     fileData, id, type,
     string, handleS, category, tabNav, typeU, pId, catData,
     stringU, handleSU, handleTU, typeC, client,
-    stringC, handleSC, handleTC, auth, admin, fetchCombinedPM,
+    stringC, handleSC, handleTC, auth, admin, fetchCombinedPM, fetchCombinedCP,
     stringP, handleSP, handleISL, isList, categoryP, fetchCombined, fetchCombinedC
 }) => {
     const [categories, setC] = useState([]),
@@ -34,26 +53,12 @@ const List = ({
         [ord, setO] = useState(0);
 
     useEffect(() => {
-        let cat = [], catP = [];
-        setC([]); setCP([]); setCC([]); setCU([]); setListC([]); setListU([]);
-        if (!admin && category && category.length > 0) {
-            cat = category;
-            setC(cat);
-        } else if (catData && catData.catList) {
+
+        if (catData && catData.catList && tabNav === 0) {
             setC(catData.catList);
         }
 
-        if (!auth && categoryP && categoryP.length > 0) {
-            let tempArr = [];
-            categoryP.map((i) => {
-                if (!tempArr.includes(i.name)) {
-                    tempArr.push(i.name);
-                    catP.push(i);
-                }
-                return i;
-            })
-            setCP(catP);
-        } else if (catData && catData.catList) {
+        if (catData && catData.catList && tabNav === 1) {
             setCP(catData.catList);
         }
 
@@ -69,21 +74,15 @@ const List = ({
 
     }, [category, categoryP, string, stringP, auth, tabNav, fileData, catData, admin]);
 
-    const onhandleS = e => handleS(e.target.value);
-    const onhandleSU = e => handleSU(e.target.value);
-    const onhandleSC = e => handleSC(e.target.value);
-    const onhandleSP = e => handleSP(e.target.value);
-
-
     const handleSelectU = e => {
         const selectedIndex = e.target.options.selectedIndex;
         e.target.options[selectedIndex].getAttribute('data-key') && handleTU(e.target.options[selectedIndex].getAttribute('data-key'));
-    }
+    };
 
     const handleSelectC = e => {
         const selectedIndex = e.target.options.selectedIndex;
         e.target.options[selectedIndex].getAttribute('data-key') && handleTC(e.target.options[selectedIndex].getAttribute('data-key'));
-    }
+    };
 
 
     const setIN = i => {
@@ -92,143 +91,76 @@ const List = ({
 
     const handleSearch = (e) => {
         e.preventDefault();
-        let cat = [];
-        if (!string) {
-            cat = category;
-        } else {
-            cat = category;
-            cat = cat.filter(Item => { return new RegExp('^^.*' + string + '.*', "i").test(Item.name); });
-        }
-        setC(cat);
-    }
+        fetchCombinedCP({ auth: admin, string: string });
+    };
 
     const handleSearchU = e => {
         e.preventDefault();
-        let data = { string: stringU, type: typeU === 'All' ? typeU : typeU.toLowerCase(), pId: pId };
+        let data = { string: stringU, type: typeU === 'All' ? typeU : typeU.toLowerCase(), _id: pId };
         fetchCombined(data);
-    }
+    };
 
     const handleSearchC = e => {
         e.preventDefault();
-        let data = { string: stringC, type: typeC === 'All' ? typeC : typeC.toLowerCase(), pId: pId };
+        let data = { string: stringC, type: typeC === 'All' ? typeC : typeC.toLowerCase(), _id: pId };
         fetchCombinedC(data);
-    }
+    };
 
     const handleSearchP = e => {
-        if (!auth) {
-            e.preventDefault();
-            let cat = [];
-            if (!stringP) {
-                cat = categoryP;
-            } else {
-                cat = categoryP;
-                cat = cat.filter(Item => { return new RegExp('^^.*' + stringP + '.*', "i").test(Item.name); });
-            }
-            setCP(cat);
-        } else {
-            fetchCombinedPM({ string: stringP });
-        }
+        fetchCombinedPM({ string: stringP, auth });
     };
 
     const renderOptions = () => returnSelectT().map(Item => <option data-key={Item} key={Item}>{Item}</option>);
 
-    let listItems = ['Company', 'Project', 'Personal'];
+    let listItems = ['Admin', 'Project', 'Personal'];
 
     if (client) listItems.push('Client');
 
     return <div className="col-11 f-w p-0">
-        <h4 className="h">All Files</h4>
-        <Tabnav items={listItems} i={tabNav} setI={setIN} />
-
-        {tabNav === 0 && <>
-            <div style={dF}>
-                <div className="input-group" style={mT}>
-                    <input type="text" className="form-control" placeholder="Folder name" value={string} onChange={e => onhandleS(e)} onKeyPress={e => e.key === 'Enter' && handleSearch(e)} />
-                    <div className="input-group-append">
-                        <button className="btn btn-outline-secondary" type="button" onClick={e => handleSearch(e)} ><div className="faH" /></button>
-                    </div>
-                </div>
-            </div>
-            <div style={dF}>
-                <div className={`order ${ord < 2 ? 'orderA' : ''}`} onClick={e => setO(ord >= 2 ? 0 : ord === 0 ? 1 : 0)}>
-                    <img src={ord === 1 ? CalAsc : CalDes} alt="Icon" style={{ width: '100%' }} />
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+            <h4 className="h" style={{ marginTop: '24px' }}>All Files</h4>
+            <div style={{ marginLeft: 'auto' }} />
+            <Searchbar isCreate={false} classN={`col-lg-5 col-12`} pad={tabNav >=2}
+                value={tabNav === 0 ? string : tabNav === 1 ? stringP : tabNav === 2 ? stringU : stringC} 
+                onHandleInput={val => tabNav === 0 ? handleS(val) :
+                    tabNav === 1 ? handleSP(val) : tabNav === 2 ? handleSU(val) : handleSC(val)} comp={tabNav < 2 ? <></>
+                        : <>
+                            <div style={{ height: '30px', margin: 'auto 2px', width: '2px', backgroundColor: '#f9f9f9' }}></div>
+                            <select className="custom-select col-3" onChange={e => tabNav === 2 ? handleSelectU(e) : handleSelectC(e)} value={tabNav === 2 ? typeU : typeC}>
+                                {renderOptions()}
+                            </select>
+                        </>} holder={tabNav < 2 ? 'Folder name' : 'Enter text here'} handleSearch={e => {
+                            tabNav === 0 ? handleSearch(e) : tabNav === 1 ? handleSearchP(e) : tabNav === 2 ? handleSearchU(e) : handleSearchC(e)
+                        }} />
+            <div className="col-12" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <div className={`order ${ord < 2 ? 'orderA' : ''}`} style={{ marginLeft: '12px', marginTop: '0px' }} onClick={e => setO(ord >= 2 ? 0 : ord === 0 ? 1 : 0)}>
+                    <img src={ord === 1 ? CalAsc : CalDes} alt="Icon" style={{ width: '100%', marginTop: '0px' }} />
                     <span className="tooltip">Sort By Date</span>
                 </div>
-                <div className={`order ${ord >= 2 ? 'orderA' : ''}`} style={{ padding: '4px' }} onClick={e => setO(ord < 2 ? 2 : ord === 2 ? 3 : 2)}>
+                <div className={`order ${ord >= 2 ? 'orderA' : ''}`} style={{ padding: '4px', marginTop: '0px' }} onClick={e => setO(ord < 2 ? 2 : ord === 2 ? 3 : 2)}>
                     <img src={ord === 3 ? SortZA : SortAZ} alt="Icon" style={{ width: '100%' }} />
                     <span className="tooltip">Sort By Name</span>
                 </div>
-                <div className={`order`} onClick={e => handleISL(!isList)}>
+                <div className={`order`} style={{ marginTop: '0px' }} onClick={e => handleISL(!isList)}>
                     <img src={!isList ? ListIco : BlockIco} alt="Icon" style={{ width: '100%' }} />
                     <span className="tooltip">{!isList ? 'List View' : 'Grid View'}</span>
                 </div>
             </div>
+        </div>
+        <Tabnav items={listItems} i={tabNav} setI={setIN} icons={icons} />
 
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '20px' }}>
-                {categories && categories.length > 0 ? <Suspense fallback={<></>}> <CatList list={categories} isList={isList} i={0} id={id} ord={ord} /></Suspense>
-                    : <h6 className="f-n" style={eS}>No folder found</h6>}
-            </div>
-        </>}
+        {tabNav === 0 && <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '12px' }}>
+            {categories && categories.length > 0 ? <Suspense fallback={<></>}> <CatList list={categories} isList={isList} i={0} id={id} ord={ord} /></Suspense>
+                : <h6 className="f-n" style={eS}>No folder found</h6>}
+        </div>}
 
-        {tabNav === 1 && <>
-            <div style={dF}>
-                <div className="input-group" style={mT}>
-                    <input type="text" className="form-control" placeholder="Folder name" value={stringP} onChange={e => onhandleSP(e)} onKeyPress={e => e.key === 'Enter' && handleSearchP(e)} />
-                    <div className="input-group-append">
-                        <button className="btn btn-outline-secondary" type="button" onClick={e => handleSearchP(e)} ><div className="faH" /></button>
-                    </div>
-                </div>
-            </div>
-            <div style={dF}>
-                <div className={`order ${ord < 2 ? 'orderA' : ''}`} onClick={e => setO(ord >= 2 ? 0 : ord === 0 ? 1 : 0)}>
-                    <img src={ord === 1 ? CalAsc : CalDes} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">Sort By Date</span>
-                </div>
-                <div className={`order ${ord >= 2 ? 'orderA' : ''}`} style={{ padding: '4px' }} onClick={e => setO(ord < 2 ? 2 : ord === 2 ? 3 : 2)}>
-                    <img src={ord === 3 ? SortZA : SortAZ} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">Sort By Name</span>
-                </div>
-                <div className={`order`} onClick={e => handleISL(!isList)}>
-                    <img src={!isList ? ListIco : BlockIco} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">{!isList ? 'List View' : 'Grid View'}</span>
-                </div>
-            </div>
-
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '20px' }}>
-                {categoriesP && categoriesP.length > 0 ? <Suspense fallback={<></>}> <CatList list={categoriesP} i={1} id={id} ord={ord} isList={isList} /></Suspense>
-                    : <h6 className="f-n" style={eS}>No folder found</h6>}
-            </div>
-        </>}
+        {tabNav === 1 && <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '12px' }}>
+            {categoriesP && categoriesP.length > 0 ? <Suspense fallback={<></>}> <CatList list={categoriesP} i={1} id={id} ord={ord} isList={isList} /></Suspense>
+                : <h6 className="f-n" style={eS}>No folder found</h6>}
+        </div>}
 
         {tabNav === 2 && <>
-            <div style={dF}>
-                <div className="input-group" style={mT}>
-                    <input type="text" className="form-control" placeholder="Enter text here" value={stringU} onChange={e => onhandleSU(e)}
-                        onKeyPress={e => e.key === 'Enter' && handleSearchU(e)} />
-                    <select className="custom-select col-lg-2 col-4" onChange={e => handleSelectU(e)} defaultValue={type}>
-                        {renderOptions()}
-                    </select>
-                    <div className="input-group-append">
-                        <button className="btn btn-outline-secondary" type="button" onClick={e => handleSearchU(e)} ><div className="faH" /></button>
-                    </div>
-                </div>
-            </div>
-            <div style={dF}>
-                <div className={`order ${ord < 2 ? 'orderA' : ''}`} onClick={e => setO(ord >= 2 ? 0 : ord === 0 ? 1 : 0)}>
-                    <img src={ord === 1 ? CalAsc : CalDes} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">Sort By Date</span>
-                </div>
-                <div className={`order ${ord >= 2 ? 'orderA' : ''}`} style={{ padding: '4px' }} onClick={e => setO(ord < 2 ? 2 : ord === 2 ? 3 : 2)}>
-                    <img src={ord === 3 ? SortZA : SortAZ} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">Sort By Name</span>
-                </div>
-                <div className={`order`} onClick={e => handleISL(!isList)}>
-                    <img src={!isList ? ListIco : BlockIco} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">{!isList ? 'List View' : 'Grid View'}</span>
-                </div>
-            </div>
-
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '20px' }}>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '12px' }}>
                 {categoriesU && categoriesU.length > 0 && <Suspense fallback={<></>}> <CatList i={2} list={categoriesU} id={id} ord={ord} isList={isList} /></Suspense>}
                 {listU && listU.length > 0 && <Suspense fallback={<></>}> <FileList i={2} isList={isList} list={listU} ord={ord} id={id} /> </Suspense>}
             </div>
@@ -238,33 +170,7 @@ const List = ({
         </>}
 
         {tabNav === 3 && <>
-            <div style={dF}>
-                <div className="input-group" style={mT}>
-                    <input type="text" className="form-control" placeholder="Enter text here" value={stringC} onChange={e => onhandleSC(e)}
-                        onKeyPress={e => e.key === 'Enter' && handleSearchC(e)} />
-                    <select className="custom-select col-lg-2 col-4" onChange={e => handleSelectC(e)} defaultValue={type}>
-                        {renderOptions()}
-                    </select>
-                    <div className="input-group-append">
-                        <button className="btn btn-outline-secondary" type="button" onClick={e => handleSearchC(e)} ><div className="faH" /></button>
-                    </div>
-                </div>
-            </div>
-            <div style={dF}>
-                <div className={`order ${ord < 2 ? 'orderA' : ''}`} onClick={e => setO(ord >= 2 ? 0 : ord === 0 ? 1 : 0)}>
-                    <img src={ord === 1 ? CalAsc : CalDes} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">Sort By Date</span>
-                </div>
-                <div className={`order ${ord >= 2 ? 'orderA' : ''}`} style={{ padding: '4px' }} onClick={e => setO(ord < 2 ? 2 : ord === 2 ? 3 : 2)}>
-                    <img src={ord === 3 ? SortZA : SortAZ} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">Sort By Name</span>
-                </div>
-                <div className={`order`} onClick={e => handleISL(!isList)}>
-                    <img src={!isList ? ListIco : BlockIco} alt="Icon" style={{ width: '100%' }} />
-                    <span className="tooltip">{!isList ? 'List View' : 'Grid View'}</span>
-                </div>
-            </div>
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '20px' }}>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '12px' }}>
                 {categoriesC && categoriesC.length > 0 && <Suspense fallback={<></>}> <CatList i={3} list={categoriesC} id={id} ord={ord} isList={isList} /></Suspense>}
                 {listC && listC.length > 0 && <Suspense fallback={<></>}> <FileList i={3} isList={isList} list={listC} ord={ord} id={id} /> </Suspense>}
             </div>

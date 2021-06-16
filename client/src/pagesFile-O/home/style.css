@@ -1,0 +1,114 @@
+.home {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+}
+
+.home .buttonB {
+    background-color: #008CBD;
+    margin-top: 16px;
+    font-weight: 400;
+    font-size: 14px;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 1000px;
+    color: white;
+    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.05), 0 1px 2px 1px rgba(0, 0, 0, 0.1);
+}
+
+.home .header-end {
+    padding: 0px 30px;
+    width: 100%;
+    background-image: linear-gradient(#008CBD, #3AAED5);
+}
+
+.home .button {
+    background-color: white;
+    margin-right: 16px;
+    font-weight: 400;
+    padding: 3px;
+    font-size: 14px;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 1000px;
+    color: #3AAED5;
+    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.05), 0 1px 2px 1px rgba(0, 0, 0, 0.1);
+}
+
+.home .card-out {
+    display: flex;
+    align-self: stretch
+}
+
+.home .card-out .card {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px 36px 24px;
+    background-color: white;
+    min-height: 100px;
+    border-radius: 12px;
+    box-shadow: 0 12px 16px 1px rgba(0, 0, 0, 0.07), 0 1px 2px 1px rgba(0, 0, 0, 0.13);
+}
+
+.home .input-div {
+    display: flex;
+    flex-direction: row;
+    background-color: white;
+    border-radius: 1000px;
+    min-width: 30%;
+    padding: 6px;
+    margin-top: 24px;
+    overflow: hidden;
+}
+
+.home .input-div input {
+    background-color: white;
+    padding: 4px 12px;
+    min-width: 70%;
+    border: none;
+    box-shadow: none;
+    outline: none;
+}
+
+.home .input-div .btn-free {
+    border-radius: 1000px;
+    padding: 6px;
+    background-color: #008CBD;
+    color: white;
+    font-size: 14px;
+    margin-left: auto;
+    padding: 6px 24px;
+    text-decoration: none !important;
+    border: #008CBD 1px solid;
+    box-shadow: none;
+    outline: none;
+    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.05), 0 1px 2px 1px rgba(0, 0, 0, 0.1);
+}
+
+
+@media only screen and (max-width: 992px) {
+    .home .header-end {
+        padding: 30px 0px;
+    }
+
+    .home .input-div {
+        width: 90%;
+    }
+
+    .home .input-div input {
+        width: 70%;
+    }
+
+    .home .input-div .btn-free {
+        padding: 6px 12px;
+    }
+
+    .home .mtSR {
+        margin-top: 30px;
+    }
+}

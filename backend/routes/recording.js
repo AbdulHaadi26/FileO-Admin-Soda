@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const JWT = require('../middlewares/jwtAuth');
+
 const uuidv4 = require('uuid/v4');
+const JWT = require('../middlewares/jwtAuth');
 
 const {
     getSodaDatabase,
@@ -58,21 +59,19 @@ router.post('/register', JWT, async (req, res, next) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionSet, collectionRecs] = [
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('sets'),
-            await soda.createCollection('recrs')
-        ];
+        const collectionSet = await soda.createCollection('sets');
+        const collectionRecs = await soda.createCollection('recrs');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionUser = await soda.createCollection('users');
 
         const { size, type, mime, fName } = req.body;
-        var dataSize = size / (1024 * 1024 * 1024);
-        var fileSize = 5;
 
-        const p1 = findOrganizationByIdUpt(req.token.org, collectionOrg);
-        const p2 = findUserById(req.token._id, collectionUser);
-        const p3 = getSetting(collectionSet);
-        var [organ, user, set] = [await p1, await p2, await p3];
+        let dataSize = size / (1024 * 1024 * 1024);
+        let fileSize = 5;
+
+        var organ = await findOrganizationByIdUpt(req.token.org, collectionOrg);
+        let user = await findUserById(req.token._id, collectionUser);
+        let set = await getSetting(collectionSet);
 
         if (set && set.maxFileSize) fileSize = Number(set.maxFileSize);
         if (dataSize > fileSize) return res.json({ error: 'File exceeds size limit' });
@@ -83,12 +82,11 @@ router.post('/register', JWT, async (req, res, next) => {
             postedby: req.token._id, org: req.token.org, url: '', created: Date.now(), date: new Date()
         };
 
-        var p4 = createRec(fData, collectionRecs);
-        var p5 = updateOrganizationStorage(req.token.org, organ.data_uploaded, organ.available, organ.combined_plan, dataSize, collectionOrg);
-        var p6 = updateUserStorage(req.token._id, user.storageUploaded, user.storageAvailable, user.storageLimit, dataSize, collectionUser);
-        var [key, upt, upt1] = [await p4, await p5, await p6];
+        let key = await createRec(fData, collectionRecs);
+         await updateOrganizationStorage(req.token.org, organ.data_uploaded, organ.available, organ.combined_plan, dataSize, collectionOrg);
+         await updateUserStorage(req.token._id, user.storageUploaded, user.storageAvailable, user.storageLimit, dataSize, collectionUser);
 
-        const fileName = `${uuidv4()}${fName.toLowerCase().split(' ').join('-')}.webm`;
+        const fileName = `${fName}.webm`;
         fData.url = generateFileName(fileName, req.token.org, key, req.token._id);
 
         let rec = await updateUrl(key, fData.url, collectionRecs);
@@ -112,7 +110,7 @@ async function generateFileUrl(file, bucket) {
 }
 
 function generateFileName(fileName, org, _id, userId) {
-    return `FileO/organization/${org}/user/recordings/${userId}/file/${_id}/${fileName}`;
+    return `FileO/organization/${org}/user/recordings/${userId}/file/${_id}/${uuidv4()}/${fileName}`;
 }
 
 async function updateOrganizationStorage(org, d_u, avb, cb_p, size, collectionOrg) {
@@ -143,17 +141,14 @@ router.post('/deleteRec', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionRecs] = [
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('recrs')
-        ];
+        const collectionRecs = await soda.createCollection('recrs');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionUser = await soda.createCollection('users');
 
         const { _id } = req.body;
-        var rec = await findRecByIdDel(_id, collectionRecs);
-        var p1 = findOrganizationByIdUpt(rec.org, collectionOrg);
-        var p2 = findUserById(rec.postedby, collectionUser);
-        var [org, user] = [await p1, await p2];
+        let rec = await findRecByIdDel(_id, collectionRecs);
+        let org = await findOrganizationByIdUpt(rec.org, collectionOrg);
+        let user = await findUserById(rec.postedby, collectionUser);
 
         var uploaded_data = Number(org.data_uploaded)
         var available = Number(org.available);
@@ -183,7 +178,7 @@ router.post('/deleteRec', JWT, async (req, res) => {
             await updatePackageDetails(req.token.org, uploaded_data, available, percent_left, percent_used, collectionOrg);
             await updateStorage(req.token._id, userUploaded, userAvailable, collectionUser);
         }
-        let userData = findUserById(rec.postedby, collectionUser);
+        let userData = await findUserById(rec.postedby, collectionUser);
         res.json({ user: userData });
     } catch (e) {
         console.log(e);
@@ -201,16 +196,16 @@ router.post('/deleteAttachment', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionRecs, collectionNote] = [
-            await soda.createCollection('users'), await soda.createCollection('orgs'),
-            await soda.createCollection('recrs'), await soda.createCollection('notes')
-        ];
+
+        const collectionNote = await soda.createCollection('notes');
+        const collectionRecs = await soda.createCollection('recrs');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionUser = await soda.createCollection('users');
 
         const { _id } = req.body;
         var rec = await findRecByIdDel(_id, collectionRecs);
-        var p1 = findOrganizationByIdUpt(rec.org, collectionOrg);
-        var p2 = findUserById(rec.postedby, collectionUser);
-        var [org, user] = [await p1, await p2];
+        let org = await findOrganizationByIdUpt(rec.org, collectionOrg);
+        let user = await findUserById(rec.postedby, collectionUser);
 
         var uploaded_data = Number(org.data_uploaded)
         var available = Number(org.available);
@@ -242,7 +237,7 @@ router.post('/deleteAttachment', JWT, async (req, res) => {
             await updateStorage(req.token._id, userUploaded, userAvailable, collectionUser);
         }
 
-        let userData = findUserById(rec.postedby, collectionUser);
+        let userData = await findUserById(rec.postedby, collectionUser);
 
         res.json({ user: userData });
     } catch (e) {
@@ -261,14 +256,20 @@ router.get('/getFile/:_id', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionRecs, collectionFileV] = [
-            await soda.createCollection('recrs'), await soda.createCollection('file_views')
-        ];
+        const collectionFileV = await soda.createCollection('file_views');
+        const collectionRecs = await soda.createCollection('recrs');
 
         const { _id } = req.params;
+
         let file = await getFile(_id, collectionRecs);
+
         if (!file) throw new Error('File not found')
-        var data = { orgId: req.token.org, userId: req.token._id, fileId: _id, fileSize: file.size, type: 3, created: Date.now(), date: new Date() };
+
+        let data = {
+            orgId: req.token.org, userId: req.token._id,
+            fileId: _id, fileSize: file.size, type: 3,
+            created: Date.now(), date: new Date()
+        };
         await createFileView(data, collectionFileV);
 
         res.json({ file: file });
@@ -288,14 +289,21 @@ router.post('/download/:_id', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionRecs, collectionFileV] = [
-            await soda.createCollection('recrs'), await soda.createCollection('file_views')
-        ];
+        const collectionFileV = await soda.createCollection('file_views');
+        const collectionRecs = await soda.createCollection('recrs');
 
         const { _id } = req.params;
+
         let file = await downloadFile(_id, collectionRecs);
+
         if (!file) throw new Error('File not found')
-        var data = { orgId: req.token.org, userId: req.token._id, fileId: _id, fileSize: file.size, type: 3, created: Date.now(), date: new Date() };
+
+        let data = {
+            orgId: req.token.org, userId: req.token._id,
+            fileId: _id, fileSize: file.size, type: 3,
+            created: Date.now(), date: new Date()
+        };
+
         await createFileView(data, collectionFileV);
 
         res.json({ file: file });
@@ -318,7 +326,7 @@ router.get('/getFileCount', JWT, async (req, res) => {
         const collectionFiles = await soda.createCollection('recrs');
 
         const { type } = req.query;
-        var count = await getAllRecCount(req.token._id, type, collectionFiles);
+        let count = await getAllRecCount(req.token._id, type, collectionFiles);
 
         return res.json({ fileCount: count });
     } catch (e) {
@@ -342,7 +350,7 @@ router.get('/getCombined', JWT, async (req, res) => {
         const { string, type } = req.query;
         let fileList;
 
-        if (string) fileList = await getAllRecQueryCount(req.token._id, string, type, collectionFiles);
+        if (string) fileList = await getAllRecQueryLimit(req.token._id, string, type, collectionFiles);
         else fileList = await getAllRecLimit(req.token._id, type, collectionFiles);
 
         return res.json({ files: fileList });
@@ -366,7 +374,7 @@ router.get('/getFiles', JWT, async (req, res) => {
         const collectionFiles = await soda.createCollection('recrs');
 
         const { offset, type } = req.query;
-        var fileList = await getAllRecLimit(offset, req.token._id, type, collectionFiles);
+        let fileList = await getAllRecLimit(offset, req.token._id, type, collectionFiles);
 
         return res.json({ files: fileList });
     } catch (e) {
@@ -387,7 +395,7 @@ router.get('/searchFileCount', JWT, async (req, res) => {
         const collectionFiles = await soda.createCollection('recrs');
 
         const { string, type } = req.query;
-        var count = await getAllRecQueryCount(req.token._id, string, type, collectionFiles);
+        let count = await getAllRecQueryCount(req.token._id, string, type, collectionFiles);
 
         return res.json({ fileCount: count });
     } catch (e) {
@@ -409,7 +417,7 @@ router.get('/searchFiles', JWT, async (req, res) => {
         const collectionFiles = await soda.createCollection('recrs');
 
         const { offset, string, type } = req.query;
-        var fileList = await getAllRecQueryLimit(offset, req.token._id, string, type, collectionFiles);
+        let fileList = await getAllRecQueryLimit(offset, req.token._id, string, type, collectionFiles);
 
         return res.json({ files: fileList });
     } catch (e) {

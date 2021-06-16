@@ -15,7 +15,7 @@ const Modal = ({ id, org, onhandleModalDel, deleteUser }) => {
     }
 
     return <DelC handleModalDel={onhandleModalDel} handleDelete={onhandleDelete}>
-        <p style={mT}>Are you sure? </p>
+        <p style={mT}>All user data will be deleted and price will be adjusted in next bill. Are you sure? </p>
     </DelC>
 }
 

@@ -9,9 +9,12 @@ const FilePage = ({ match, profile, isL, fetchCombined }) => {
     const [started, setStarted] = useState(0), [type, setT] = useState('All'), [s, setS] = useState(''), [tabNav, setTN] = useState(0), [isList, setISL] = useState(false);
 
     useEffect(() => {
-        let data = { type: 'All' };
-        fetchCombined(data);
-        setStarted(1);
+        async function fetch() {
+            let data = { type: 'All' };
+            await fetchCombined(data);
+            setStarted(1);
+        }
+        fetch();
     }, [fetchCombined, setStarted]);
 
     const onhandleT = tp => setT(tp);
@@ -19,7 +22,8 @@ const FilePage = ({ match, profile, isL, fetchCombined }) => {
 
     return <Container profile={profile} num={1} isSuc={!isL && started > 0}>
         <List id={id} date={date} type={type} s={s} uId={profile.user._id} tabNav={tabNav}
-            setTN={setTN} handleS={onhandleS} handleT={onhandleT} isList={isList} handleISL={setISL} />
+            setTN={setTN} handleS={onhandleS} handleT={onhandleT} isList={isList} handleISL={setISL}
+        />
     </Container>
 }
 

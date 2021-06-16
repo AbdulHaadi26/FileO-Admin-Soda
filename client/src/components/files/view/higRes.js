@@ -3,8 +3,8 @@ import User from '../../../assets/static/user.png';
 import ButtonDown from './buttonDown';
 import ConvertDate from '../../containers/dateConvert';
 const FileType = lazy(() => import('../../containers/fileType'));
-const dS = { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginTop: '12px' };
-const iS = { width: '50px', height: '50px', borderRadius: '1000px', marginRight: '12px' };
+const dS = { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' };
+const iS = { width: '40px', height: '40px', borderRadius: '1000px', marginRight: '12px', marginTop:'12px' };
 
 export default ({ name, type1, type2, url1, url2, ver1, ver2, cmp, width, version, version2, p1, p2, d1, d2, desc1, desc2, i1, i2, id1, id2, onhandleSelect, onhandleSelect2 }) => <>
     <div className="f-v-w" style={{ marginTop: '24px', marginBottom: '12px', alignItems:'center' }}>

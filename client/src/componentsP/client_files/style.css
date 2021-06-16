@@ -1,0 +1,141 @@
+.f-w {
+    margin-top: 20px;
+}
+
+.f-w .del-btn {
+    color: #c0392b;
+    margin-left: 8px;
+    cursor: pointer;
+}
+
+.f-w .del-btn:hover {
+    color: #e74c3c;
+}
+
+.f-w .date {
+    margin-top: 12px;
+    font-weight: 400;
+    font-size: 12px;
+    color: gray;
+}
+
+.f-w .name {
+    margin-top: 12px;
+    font-weight: 400;
+}
+
+.f-w .updated-left {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: white;
+    background-color: red;
+    padding: 6px 24px;
+    font-size: 12px;
+    border-radius: 4px;
+    font-weight: 400;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.15), 0 1px 3px 0 rgba(0, 0, 0, 0.24);
+}
+.f-w .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: white;
+    min-width: 180px;
+    box-shadow: 0px 1px 3px 
+    0px rgba(0, 0, 0, 0.33);
+    padding: 0;
+    flex-direction: column;
+    z-index: 9999 !important;
+    right: 2%;
+    top: 30px;
+}
+
+.f-w .dropdown-content .s-l {
+    margin: 0px;
+    display: block;
+    padding: 12px 12px 12px 12px;
+    text-decoration: none;
+    color: #2c3e50;
+    font-weight: 400;
+    font-size: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.f-w .dropdown-content .s-l:hover {
+    background-color: #f5f6fa;
+}
+
+.fMW .data {
+    margin-top: 20px;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-bottom: 10px;
+    border-bottom: #dfe6e9 1px solid;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.fMW .opt {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    font-weight: 400;
+    text-decoration: none !important;
+}
+
+.fMW .permBtn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.download {
+    display: none !important
+}
+
+.f-v-w {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.fI {
+    margin-top: 20px;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-bottom: 10px;
+    border-bottom: #dfe6e9 1px solid;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.fI .dyna {
+    font-weight: 400;
+}
+
+.fI .dyna {
+    width: 100%;
+    text-align: left;
+}
+
+@media only screen and (max-width:992px) {
+    .f-w .input-group {
+        width: 100%;
+    }
+    .f-v-w {
+        flex-direction: column;
+        justify-content: start;
+    }
+    .fIW {
+        margin-left: 0px;
+        margin-right: 0px;
+        min-height: auto !important;
+        align-self: auto !important;
+    }
+}

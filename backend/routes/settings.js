@@ -12,7 +12,7 @@ const {
     getSetting
 } = require('../schemas/setting');
 
-router.get('/settings', JWT, async (req, res) => {
+router.get('/settings', async (req, res) => {
     var connection;
     try {
         connection = await getConnection();
@@ -21,7 +21,7 @@ router.get('/settings', JWT, async (req, res) => {
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
         const collectionSet = await soda.createCollection('sets');
-        var set = await getSetting(collectionSet);
+        let set = await getSetting(collectionSet);
         if (!set) throw new Error('Settings not found');
 
         res.json({ setting: set });

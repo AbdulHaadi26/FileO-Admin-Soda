@@ -5,11 +5,19 @@ import { fetchNotification, fetchRequests, readAllNotification } from '../../../
 import More from '../../../assets/more.svg';
 import Tabnav from '../../tabnav';
 import history from '../../../utils/history';
+import GNotif from '../../../assets/tabnav/G-notifications.svg';
+import BNotif from '../../../assets/tabnav/B-notification.svg';
+import GPlan from '../../../assets/tabnav/G-Plan.svg';
+import BPlan from '../../../assets/tabnav/B-Plan.svg';
 const ModalDelete = lazy(() => import('../modelDelAll'));
 const bS = { borderBottom: 'solid 1px #dcdde1' };
 const NotifList = lazy(() => import('./item'));
 const ReqList = lazy(() => import('./itemReq'));
 const eS = { textAlign: 'center', marginTop: '50px' };
+let icons = [
+    { G: GNotif, B: BNotif },
+    {G: GPlan, B: BPlan}
+];
 
 const List = ({ fetchNotification, fetchRequests, auth, id, isSuc, notifData, limit, limitMult, handleLM, handleL, limit2, limitMult2, handleL2, handleLM2, readAllNotification, tabNav, setTN }) => {
     const [active, setAct] = useState(false), [modalDel, setMD] = useState(false);
@@ -78,7 +86,7 @@ const List = ({ fetchNotification, fetchRequests, auth, id, isSuc, notifData, li
 
     return <div className="col-11 not-w p-0">
         <h4 className="h">Notification</h4>
-        <Tabnav items={listOpt} i={tabNav} setI={setIN} />
+        <Tabnav items={listOpt} i={tabNav} setI={setIN} icons={icons} />
         {tabNav === 0 && <>
             <div className="notIM">
                 <div className="faN mr-auto" onClick={e => resetFetch(e)}><div className="refresh" /></div>

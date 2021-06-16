@@ -5,24 +5,32 @@ import Token from './token';
 import axios from 'axios';
 import { ModalProcess } from "./profileActions";
 import { updateFileCount } from "./sharedFilesAction";
-const { FClr, FErr, FReq, FUpt, GFSuc, GFISuc, FSuc } = fileConstants;
+import { logOut } from "./userActions";
+const { FClr, FErr, FReq, FUpt, GFSuc, GFISuc, FSuc, ErrRClr, ErrReplace, FDelAtt, FUptAtt, ReplaceFileVer } = fileConstants;
 const { CReq, CSuc, CErr, GCSuc } = catConstants
 
 export const registerFile = (data, file) => async dispatch => {
     try {
         dispatch({ type: FReq });
         Token();
-        var res = await api.post("/user_file/register", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        let res = await api.post("/user_file/register", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         if (res.data.file && res.data.url && !res.data.error) dispatch(uploadFile(file, res.data.url, res.data.file));
         else if (res.data.error && res.data.error === 'Upload limit exceeded') {
             dispatch(clearFile());
             history.push(`/organization/${data.org}/myspace/limit`);
             dispatch(ModalProcess({ title: 'User File', text: 'Storage limit has been reached.', isErr: true }));
+        } else if (res.data.error && res.data.file) {
+            dispatch(clearFile());
+            res.data.dataFile = file;
+            dispatch({ type: ErrReplace, payload: res.data });
         } else {
-            dispatch(ModalProcess({ title: 'User File', text: 'User File uploading has failed.', isErr: true }));
+            dispatch(ModalProcess({ title: 'User File', text: 'User File with same name already exists.', isErr: true }));
             dispatch(clearFile());
         }
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const fetchAttachment = data => async dispatch => {
@@ -34,7 +42,10 @@ export const fetchAttachment = data => async dispatch => {
             dispatch({ type: GFSuc, payload: res.data });
             dispatch({ type: FSuc });
         } else dispatch({ type: FErr });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const registerFileMod = (data, file) => async dispatch => {
@@ -45,41 +56,53 @@ export const registerFileMod = (data, file) => async dispatch => {
         if (res.data.file && res.data.url && !res.data.error) {
             dispatch({ type: GFISuc, payload: res.data.file });
             dispatch(uploadFile(file, res.data.url, res.data.file));
-        }
-        else if (res.data.error && res.data.error === 'Upload limit exceeded') {
+        } else if (res.data.error && res.data.error === 'Upload limit exceeded') {
             dispatch(clearFile());
             history.push(`/organization/${data.org}/myspace/limit`);
             dispatch(ModalProcess({ title: 'User File', text: 'Storage limit has been reached.', isErr: true }));
+        }
+        else if (res.data.error && res.data.file) {
+            dispatch(clearFile());
+            res.data.dataFile = file;
+            dispatch({ type: ErrReplace, payload: res.data });
         } else {
-            dispatch(ModalProcess({ title: 'User File', text: 'User File uploading has failed.', isErr: true }));
+            dispatch(ModalProcess({ title: 'User File', text: 'User File with same name already exists.', isErr: true }));
             dispatch(clearFile());
         }
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
-
 
 export const registerFileVer = (data, file) => async dispatch => {
     try {
         dispatch({ type: FReq });
         Token();
-        var res = await api.post("/user_file/registerVer", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
-        if (res.data.file && res.data.url && !res.data.error) dispatch(uploadFile(file, res.data.url, res.data.file));
+        let res = await api.post("/user_file/registerVer", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        if (res.data.file && res.data.url && !res.data.error) {
+            data.mod && dispatch({ type: GFISuc, payload: res.data.file });
+            dispatch(uploadFile(file, res.data.url, res.data.file));
+        }
         else if (res.data.error && res.data.error === 'Upload limit exceeded') {
             dispatch(clearFile());
             history.push(`/organization/${data.org}/myspace/limit`);
             dispatch(ModalProcess({ title: 'User File', text: 'Storage limit has been reached.', isErr: true }));
         } else {
-            dispatch(ModalProcess({ title: 'User File', text: 'User File version uploading has failed.', isErr: true }));
+            dispatch(ModalProcess({ title: 'User File', text: 'User File version with same name already exists.', isErr: true }));
             dispatch(clearFile());
         }
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const uploadFile = (file, url, fileData) => async dispatch => {
     try {
         Token();
         var percentCheck = 1;
-        var type = fileData.url.split('.').slice(-1);
+        var type = file.name.split('.').slice(-1);
         var fData = { name: fileData.name, size: fileData.size, type: type };
         await axios.put(url, file, {
             onUploadProgress: function (progressEvent) {
@@ -87,7 +110,10 @@ export const uploadFile = (file, url, fileData) => async dispatch => {
                 dispatch({ type: FUpt, payload: percentCheck, payloadExtra: fData });
             }
         });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const clearUpload = (org, postedby, category) => async dispatch => {
@@ -110,7 +136,10 @@ export const getCatSelect = _id => async dispatch => {
             dispatch({ type: GCSuc, payload: res.data.catList });
             dispatch({ type: CSuc })
         } else dispatch({ type: CErr });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const getCatSelectU = (_id, catId) => async dispatch => {
@@ -121,7 +150,10 @@ export const getCatSelectU = (_id, catId) => async dispatch => {
             dispatch({ type: GCSuc, payload: res.data.catList });
             dispatch({ type: CSuc })
         } else dispatch({ type: CErr });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const clearFile = () => async dispatch => dispatch({ type: FClr });
@@ -135,7 +167,25 @@ export const fetchCombined = data => async dispatch => {
             dispatch({ type: GFSuc, payload: res.data });
             dispatch({ type: FSuc });
         } else dispatch({ type: FErr });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+};
+
+export const fetchCombinedShared = data => async dispatch => {
+    try {
+        dispatch({ type: FReq });
+        Token();
+        let res = await api.get("/user_file/getCombinedShared", { params: data, headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        if (!res.data.error) {
+            dispatch({ type: GFSuc, payload: res.data });
+            dispatch({ type: FSuc });
+        } else dispatch({ type: FErr });
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const getFile = data => async dispatch => {
@@ -149,7 +199,10 @@ export const getFile = data => async dispatch => {
             dispatch({ type: FSuc });
             dispatch(updateFileCount());
         } else dispatch({ type: FErr });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const getRec = data => async dispatch => {
@@ -162,8 +215,11 @@ export const getRec = data => async dispatch => {
             dispatch({ type: GFISuc, payload: data });
             dispatch({ type: FSuc });
         } else dispatch({ type: FErr });
-    } catch { dispatch({ type: FErr }); }
-}
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+};
 
 export const getFileShared = data => async dispatch => {
     try {
@@ -177,7 +233,10 @@ export const getFileShared = data => async dispatch => {
             dispatch(updateFileCount());
         }
         else dispatch({ type: FErr });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const downloadFile = _id => async dispatch => {
@@ -185,7 +244,10 @@ export const downloadFile = _id => async dispatch => {
         Token();
         var res = await api.post(`/user_file/download/${_id}`, '', { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         if (res.data.file) window.location = res.data.file.url;
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const generateUrl = (data) => async dispatch => {
@@ -205,7 +267,10 @@ export const getFileDetailsM = data => async dispatch => {
             dispatch({ type: GFISuc, payload: data });
             dispatch({ type: FSuc });
         }
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const updateFile = data => async dispatch => {
@@ -213,23 +278,35 @@ export const updateFile = data => async dispatch => {
         Token();
         dispatch({ type: FReq });
         dispatch({ type: GFISuc, payload: '' });
-        var res = await api.post("/user_file/updateFile", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
-        if (res.data.success && !res.data.error) {
+        let res = await api.post("/user_file/updateFile", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        if (res.data.file && !res.data.error) {
             dispatch(ModalProcess({ title: 'User File', text: 'User file details has been updated.' }));
+            dispatch({ type: FUptAtt, payload: res.data.file });
         } else dispatch(ModalProcess({ title: 'User File', text: 'User file details could not be updated.', isErr: true }));
         dispatch(clearFile());
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const deleteFile = (_id, org, pId) => async dispatch => {
     try {
         Token();
         dispatch({ type: FReq });
-        await api.post(`/user_file/deleteFile/${_id}`, '', { headers: { 'authorization': `${localStorage.getItem('token')}` } });
-        dispatch(ModalProcess({ title: 'User File', text: 'User file has been deleted.' }));
+        let res = await api.post(`/user_file/deleteFile/${_id}`, '', { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        if (!res.data.error) {
+            dispatch(ModalProcess({ title: 'User File', text: 'User file has been deleted.' }));
+            dispatch({ type: FDelAtt, payload: { _id } });
+        } else {
+            dispatch(ModalProcess({ title: 'User File', text: 'User file could not be deleted.', isErr: true }));
+        }
         dispatch(clearFile());
         org && pId && history.push(`/organization/${org}/myspace/user/${pId}/category/list`);
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const deleteVersion = data => async dispatch => {
@@ -238,11 +315,19 @@ export const deleteVersion = data => async dispatch => {
         dispatch({ type: FReq });
         dispatch({ type: GFISuc, payload: '' });
         let res = await api.post(`/user_file/deleteVer`, data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
-        if (res.data.success && !res.data.error) {
+        if(res.data.file && !res.data.error) {
             dispatch(ModalProcess({ title: 'User File', text: 'User file version has been deleted.' }));
+            res.data.file.repId = data._id
+            dispatch({ type: ReplaceFileVer, payload: res.data.file });
+        }  else if (res.data.success && !res.data.error) {
+            dispatch(ModalProcess({ title: 'User File', text: 'User file version has been deleted.' }));
+            dispatch({ type: FDelAtt, payload: { _id: data._id } });
         } else dispatch(ModalProcess({ title: 'User File', text: 'User file version could not be deleted.', isErr: true }));
         dispatch(clearFile());
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const registerFileM = (fileList, fL) => async dispatch => {
@@ -254,7 +339,10 @@ export const registerFileM = (fileList, fL) => async dispatch => {
             await dispatch(uploadFileM(f, fL[i], fileList, i));
             i = i + 1;
         }
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const uploadFileM = (f, fL, fLst, i) => async dispatch => {
@@ -279,8 +367,28 @@ export const deleteFiles = data => async dispatch => {
         dispatch({ type: FReq });
         Token();
         await api.post("/user_file/deleteFiles", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        dispatch({ type: FDelAtt, payload: { arr: data.arr } });
         dispatch(ModalProcess({ title: 'User File', text: 'User files has been deleted.' }));
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+};
+
+export const uploadType = data => async dispatch => {
+    try {
+        dispatch({ type: FReq });
+        Token();
+        let res = await api.post("/user_file/uploadType", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        if (!res.data.error) {
+            dispatch(ModalProcess({ title: 'User File', text: data.type === 0 ? 'User files version has been uploaded.' : 'User files newest version has been replaced' }));
+        } else {
+            dispatch(ModalProcess({ title: 'User File', text: data.type === 0 ? 'User files version could not be uploaded.' : 'User files newest version could not be replaced', isErr: true }));
+        }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const cutFiles = (data, org, id) => async dispatch => {
@@ -288,8 +396,48 @@ export const cutFiles = (data, org, id) => async dispatch => {
         dispatch({ type: FReq });
         Token();
         await api.post("/user_file/updateFilesCat", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
-        history.push(`/organization/${org}/myspace/user/${id}/files/${data.value}/list`)
-    } catch { dispatch({ type: FErr }); }
+        id && org && data.value && history.push(`/organization/${org}/myspace/user/${id}/files/${data.value}/list`);
+        id && org && !data.value && history.push(`/organization/${org}/myspace/user/${id}/category/list`);
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+};
+
+export const cutFile = (data) => async dispatch => {
+    try {
+        dispatch({ type: FReq });
+        Token();
+        let res = await api.post("/user_file/updateFileCat", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        if (res.data.error && res.data.mainFile && res.data.file) {
+            dispatch({ type: ErrReplace, payload: res.data });
+        } else {
+            dispatch({ type: FDelAtt, payload: { _id: data._id } });
+        }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+};
+
+export const copyFile = (data) => async dispatch => {
+    try {
+        dispatch({ type: FReq });
+        Token();
+        let res = await api.post("/user_file/copyFile", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        if (!res.data.error) {
+            dispatch(ModalProcess({ title: 'User File', text: 'User file has been copied.' }));
+        } else {
+            dispatch(ModalProcess({ title: 'User File', text: 'User file with same name already exists.', isErr: true }));
+        }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+};
+
+export const clearCut = () => async dispatch => {
+    dispatch({ type: ErrRClr });
 };
 
 export const registerFileNew = (data, file) => async dispatch => {
@@ -297,8 +445,10 @@ export const registerFileNew = (data, file) => async dispatch => {
         dispatch({ type: FReq });
         Token();
         let res = await api.post("/user_file/registerNew", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
-        console.log(res.data);
-        if (res.data.file && res.data.url && !res.data.error) dispatch(uploadFile(file, res.data.url, res.data.file));
+        if (res.data.file && res.data.url && !res.data.error) {
+            data.mod && dispatch({ type: GFISuc, payload: res.data.file });
+            dispatch(uploadFile(file, res.data.url, res.data.file));
+        }
         else if (res.data.error && res.data.error === 'Upload limit exceeded') {
             dispatch(clearFile());
             history.push(`/organization/${data.org}/upload/limit`);
@@ -307,7 +457,10 @@ export const registerFileNew = (data, file) => async dispatch => {
             dispatch(ModalProcess({ title: 'User File', text: 'User file with same name aleady exists.', isErr: true }));
             dispatch(clearFile());
         }
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const copyFiles = (data, org, id) => async dispatch => {
@@ -315,6 +468,10 @@ export const copyFiles = (data, org, id) => async dispatch => {
         dispatch({ type: FReq });
         Token();
         await api.post("/user_file/copyFiles", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
-        history.push(`/organization/${org}/myspace/user/${id}/files/${data.catId}/list`);
-    } catch { dispatch({ type: FErr }); }
+        org && id && data.catId && history.push(`/organization/${org}/myspace/user/${id}/files/${data.catId}/list`);
+        id && org && !data.catId && history.push(`/organization/${org}/myspace/user/${id}/category/list`);
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };

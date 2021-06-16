@@ -1,0 +1,10 @@
+.login-input {
+    background-color: white;
+    border-top: none !important;
+    border-right: none !important;
+    border-left: none !important;
+    width: 90%;
+    border-bottom: #509CFF 2px solid;
+    outline: none !important;
+    box-shadow: none !important;
+}

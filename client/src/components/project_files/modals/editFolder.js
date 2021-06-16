@@ -9,7 +9,10 @@ export default ({ onhandleModal, onhandleUpt, txt, desc }) => {
     const onhandleInputA = e => e.target.value.split(' ').length <= 500 && setDescription(e.target.value);
 
     return <Modal handleModal={onhandleModal} isOpt={true}>
-        <form onSubmit={e => text && onhandleUpt(text, description)}>
+        <form onSubmit={e => {
+            e.preventDefault();
+            text && onhandleUpt(text, description)
+        }}>
             <h3 style={{ fontWeight: '600', fontSize: '18px', padding: '6px 12px', marginTop: '12px', marginBottom: '12px' }}>Edit Folder</h3>
             <hr />
             <div className="col-12" style={{ padding: '6px 12px' }}>
@@ -31,10 +34,7 @@ export default ({ onhandleModal, onhandleUpt, txt, desc }) => {
                 <button className="btn btn-danger" type="button" style={{ fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
                     onhandleModal();
                 }}>Cancel</button>
-                <button className="btn btn-primary" type="submit" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
-                    text && onhandleUpt(text, description);
-                    setText('');
-                }}>Update</button>
+                <button className="btn btn-primary" type="submit" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }}>Update</button>
             </div>
         </form>
     </Modal>

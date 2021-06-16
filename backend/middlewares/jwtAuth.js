@@ -30,12 +30,12 @@ const jwtAuth = async (req, res, next) => {
         if (doc && doc.length > 0) await Promise.all(doc.map(async document => {
             let tempDoc = document.getContent();
             let dateNew = new Date(Date.now());
-            dateNew = dateNew.addHours(1);
+            dateNew = dateNew.addHours(0.5);
             tempDoc.last_updated = dateNew;
             await collection.find().fetchArraySize(0).key(document.key).replaceOne(tempDoc);
         }));
         else {
-            return res.status(401).json({ error: 'Idle for more than 1 hour' });
+            return res.status(401).json({ error: 'Idle for more than 15 mins' });
         }
 
         req.token = data;

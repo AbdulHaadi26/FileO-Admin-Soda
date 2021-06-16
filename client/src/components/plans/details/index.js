@@ -9,18 +9,38 @@ import ModalUpt from '../modals/uptTask';
 import DeleteModal from '../../containers/deleteContainer';
 import EditPlan from '../modals/editPlans';
 import More from '../../../assets/more.svg';
-import { updatePlan, updatePlanList, deletePlan } from '../../../redux/actions/planActions';
+import {
+    updatePlan,
+    updatePlanList,
+    deletePlan
+} from '../../../redux/actions/planActions';
+import GPlan from '../../../assets/tabnav/G-my plan.svg';
+import BPlan from '../../../assets/tabnav/B-my plan.svg';
+let icons = [{ G: GPlan, B: BPlan }];
 
-const bS = { borderBottom: 'solid 1px #dcdde1' };
-const mT = { marginTop: '12px' };
-const monthNames = ["January", "February", "March", "April", "May", "June",
+const bS = {
+    borderBottom: 'solid 1px #dcdde1'
+};
+const mT = {
+    marginTop: '12px'
+};
+
+const monthNames = [
+    "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
 ];
 
-const Days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const Colors = ["#e74c3c", "#34495e", "#3498db", "#1abc9c", "#2ecc71", "#d35400", "#9b59b6"]
+const Days = [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+];
 
-const appendText = ['st', 'nd', 'rd', 'th']
+const Colors = [
+    "#e74c3c", "#34495e", "#3498db", "#1abc9c", "#2ecc71", "#d35400", "#9b59b6"
+];
+
+const appendText = [
+    'st', 'nd', 'rd', 'th', 'th'
+];
 
 const Details = ({
     org, _id, Plan, tabNav, setTN, updatePlan, updatePlanList, deletePlan, getListA
@@ -39,7 +59,6 @@ const Details = ({
             setAct(false);
         }
     };
-
 
     useEffect(() => {
         setId(Plan._id); setDayList(Plan.day1, Plan.day2, Plan.day3, Plan.day4, Plan.day5, Plan.day6, Plan.day7);
@@ -205,13 +224,13 @@ const Details = ({
     };
 
     return <div className="col-11 nt-w p-0">
-        <h4 className="h">Plan</h4>
-        <Tabnav items={[Plan.name]} i={tabNav} setI={setTN} />
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            <div className="input-group col-lg-3 col-10" style={{ marginTop: '12px' }}>
+        <div className="JSC" style={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap:'wrap' }}>
+            <h4 className="h">Plan</h4>
+            <div style={{ marginLeft: 'auto' }} />
+            <div className="input-group col-lg-3 col-12 p-0 mTHS" style={{ marginTop: '12px', marginRight: '6px' }}>
                 <input type={'text'} className="form-control" value={text} disabled={true} />
             </div>
-            <h6 className={`order`} style={{ padding: '10px 8px 8px 8px', position: 'relative', marginTop: '14px', borderRadius: '6px' }} onClick={e => setAct(!active)}>
+            <h6 className={`order mTHS`} style={{ padding: '10px 8px 8px 8px', position: 'relative', marginTop: '14px', borderRadius: '6px' }} onClick={e => setAct(!active)}>
                 <div style={{ width: '14px', height: '14px', backgroundImage: `url('${More}')` }} />
                 <div className="dropdown-content" ref={node} style={{ display: `${active ? 'flex' : 'none'}` }}>
                     <h6 className='s-l' style={bS} onClick={e => setTP(true)}>Edit Plan</h6>
@@ -219,7 +238,7 @@ const Details = ({
                 </div>
             </h6>
         </div>
-
+        <Tabnav items={[Plan.name]} i={tabNav} setI={setTN} icons={icons} />
         <div className="card-box" style={{ width: '100%', display: 'flex', flexDirection: 'row' }}>
             <DragDropContext onDragEnd={handleOnDragEnd}>
                 {[0, 1, 2, 3, 4, 5, 6].map((i, k) => {
@@ -241,13 +260,13 @@ const Details = ({
                                             {(provided) => (
                                                 <div className={`task ${j.isComplete ? 'complete' : ''}`} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
                                                     <div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                                        <span className="icons edit" onClick={e => {
+                                                        <span className="iconDs edit" onClick={e => {
                                                             setTPN(i);
                                                             setObj(j);
                                                             setMDLE(true);
                                                         }}></span>
-                                                        <span className="icons del" onClick={e => handleDelete(j, i)}></span>
-                                                        {!j.isComplete && <span className="icons check" onClick={e => handleComplete(j, i)}></span>}
+                                                        <span className="iconDs del" onClick={e => handleDelete(j, i)}></span>
+                                                        {!j.isComplete && <span className="iconDs check" onClick={e => handleComplete(j, i)}></span>}
                                                     </div>
                                                     <p style={{ whiteSpace: 'pre-wrap' }}>{j.text}</p>
                                                 </div>)}
@@ -290,7 +309,7 @@ const Details = ({
             setObj('');
         }} />}
 
-        {tempPlan && <EditPlan getList={getListA} Plan={Plan} onhandleModal={e => setTP(false)} />}
+        {tempPlan && <EditPlan isUpt={true} getList={getListA} Plan={Plan} onhandleModal={e => setTP(false)} />}
 
     </div>
 

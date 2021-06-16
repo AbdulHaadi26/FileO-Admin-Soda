@@ -3,16 +3,16 @@ import User from '../../../assets/static/user.png';
 import ButtonDown from './buttonDown';
 import ConvertDate from '../../containers/dateConvert';
 const FileType = lazy(() => import('../../containers/fileType'));
-const mT = { marginTop: '24px' };
-const dF = { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginTop: '12px' };
-const dS = { width: '50px', height: '50px', borderRadius: '1000px', marginRight: '12px' };
+const mT = { marginTop: '12px' };
+const dF = { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' };
+const dS = { width: '40px', height: '40px', borderRadius: '1000px', marginRight: '12px', marginTop: '12px' };
 
-export default ({ name, type1, type2, url1, url2, ver1, ver2, cmp, width, version, version2, p1, p2, d1, d2, desc1, desc2, i1, i2, id1, id2, onhandleSelect, onhandleSelect2 }) => <>
+export default ({ disabled, name, type1, type2, url1, url2, ver1, ver2, cmp, width, version, version2, p1, p2, d1, d2, desc1, desc2, i1, i2, id1, id2, onhandleSelect, onhandleSelect2 }) => <>
     <div className="f-v-w" style={mT}>
         <select className="custom-select col-10" onChange={e => onhandleSelect(e)} defaultValue={`Version ${ver1}`}>
             {renderOptions(version)}
         </select>
-        <ButtonDown id={id1} url={url1} mT='-0px' />
+        <ButtonDown id={id1} url={url1} mT='-0px' disabled={disabled} />
     </div>
     <div className="f-v-w">
         <div className="col-12 p-1"><Suspense fallback={<></>}>
@@ -23,11 +23,11 @@ export default ({ name, type1, type2, url1, url2, ver1, ver2, cmp, width, versio
             </div>
             <h6 className="desc">{desc1}</h6>
             <FileType width={width} cmp={cmp} type={type1} url={url1} name={name} />
-            <ButtonDown id={id1} url={url1} />
+            <ButtonDown id={id1} url={url1} disabled={disabled} />
         </Suspense></div>
     </div>
     <div className="f-v-w" style={mT}>
-        <select className="custom-select col-10 mt-4" onChange={e => onhandleSelect2(e)} defaultValue={`Version ${ver2}`}>
+        <select className="custom-select col-10" onChange={e => onhandleSelect2(e)} defaultValue={`Version ${ver2}`}>
             {renderOptions(version2)}
         </select>
     </div>

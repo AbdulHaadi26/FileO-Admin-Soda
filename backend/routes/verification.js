@@ -28,6 +28,7 @@ const {
     updatePasswordByEmail,
     findUserByName
 } = require('../schemas/user');
+const { fileOUrl, resetUrl, logoUrl } = require('../constants');
 
 router.post('/sendMail', JWT, async (req, res) => {
     var connection;
@@ -37,16 +38,14 @@ router.post('/sendMail', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionVer, collectionSets] = [
-            await soda.createCollection('vers'),
-            await soda.createCollection('sets'),
-        ];
+        const collectionVer = await soda.createCollection('vers');
+        const collectionSets = await soda.createCollection('sets');
+
 
         const { userId, email } = req.body;
 
-        var p1 = getSetting(collectionSets);
-        var p2 = TextExists(userId, collectionVer);
-        var [set, ver] = [await p1, await p2];
+        var set = await getSetting(collectionSets);
+        var ver = await TextExists(userId, collectionVer);
 
         var transporter = nodeMailer.createTransport({
             service: set.service,
@@ -58,12 +57,14 @@ router.post('/sendMail', JWT, async (req, res) => {
 
         var code = Random.generate(6);
 
+        console.log(code);
+
         var mailOptions = {
             from: set.email,
             to: email,
             subject: 'File-O Email Verification Code',
             html: `
-            <img src="https://demo1.file-o.com/public/static/logo.png" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
+            <img src="${logoUrl}" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
             <h2 style="margin-left: 50%;">File-O</h2>
             <br/>
             <h3>Hello,</h3>
@@ -76,7 +77,7 @@ router.post('/sendMail', JWT, async (req, res) => {
             <br/>
 
             <br/>
-            <p>This code expires in 24 hours after the original verification request. <br/> Thank you for using File-O. Questions or concerns? Contact <a href="https://www.file-o.com/support" rel="noopener noreferrer" target="_blank">File-O Support<a/>.</p>
+            <p>This code expires in 24 hours after the original verification request. <br/> Thank you for using File-O. Questions or concerns? Contact <a href="${fileOUrl}/support" rel="noopener noreferrer" target="_blank">File-O Support<a/>.</p>
             
             Sincerely,
             <br/>File-O Team<br/>
@@ -123,11 +124,15 @@ router.post('/sendPassMail', async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionSets, collectionUser] = [await soda.createCollection('sets'), await soda.createCollection('users')];
+
+        const collectionUser = await soda.createCollection('users');
+        const collectionSets = await soda.createCollection('sets');
 
         const { email } = req.body;
 
-        let name = await findUserByName(email, collectionUser);
+        let user = await findUserByName(email, collectionUser);
+
+        let name = user && user.name ? user.name : '';
         if (!name) throw new Error('User does not exist');
 
         let set = await getSetting(collectionSets);
@@ -147,7 +152,7 @@ router.post('/sendPassMail', async (req, res) => {
             to: email,
             subject: 'File-O Reset Password',
             html: `
-            <img src="https://demo1.file-o.com/public/static/logo.png" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
+            <img src="${logoUrl}" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
             <h2 style="margin-left: 50%;">File-O</h2>
             <br/>
             <h3 style="font-weight:400;">Dear <b>${name}</b>,</h3>
@@ -155,7 +160,7 @@ router.post('/sendPassMail', async (req, res) => {
             <p>Did you forget your password?</p>
             <br/>
             
-            <a style="text-decoration: none; background-color:#2d3436; margin-right:12px; color: white; padding:12px 24px;" rel="noopener noreferrer" target="_blank" href="https://demo1reset.file-o.com/reset/password/${token}">Reset Password</a>This link will expire in 1 hour and can be used only once.
+            <a style="text-decoration: none; background-color:#2d3436; margin-right:12px; color: white; padding:12px 24px;" rel="noopener noreferrer" target="_blank" href="${resetUrl}/reset/password/${token}">Reset Password</a>This link will expire in 1 hour and can be used only once.
 
             <br/><br/>
             <p>If you don't want to change your password or didn't request this, please ignore and delete this message.</p> <br/>
@@ -179,7 +184,7 @@ router.post('/sendPassMail', async (req, res) => {
         console.log(e);
         res.json({ error: e.message });
     } finally {
-       await closeConnection(connection);
+        await closeConnection(connection);
     }
 });
 
@@ -194,18 +199,18 @@ router.post('/verifyUser', JWT, async (req, res) => {
 
         const { userId, text } = req.body;
 
-        const [collectionVer, collectionUser, collectionOrg, collectionRole, collectionCat] = [
-            await soda.createCollection('vers'),
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('roles'),
-            await soda.createCollection('cats'),
-        ];
+        const collectionVer = await soda.createCollection('vers');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionUser = await soda.createCollection('users');
 
         var compare = await CompareText(userId, text, collectionVer);
+        
         if (!compare) throw new Error('Provided verification text is incorrect.');
+        
         await updateVerified(userId, true, collectionUser);
-        var user = await getProfile(userId, collectionUser, collectionOrg, collectionRole, collectionCat);
+       
+        var user = await getProfile(userId, collectionUser, collectionOrg);
+       
         if (!user) throw new Error('User profile not found');
 
         res.json({ user: user });
@@ -232,11 +237,15 @@ router.post('/reset/password/:token', async (req, res) => {
 
         const { email } = data;
 
-        const [collectionSets, collectionUser] = [await soda.createCollection('sets'), await soda.createCollection('users')];
+        const collectionSes = await soda.createCollection('sessions');
+        const collectionSets = await soda.createCollection('sets');
+        const collectionUser = await soda.createCollection('users');
 
         let set = await getSetting(collectionSets);
 
-        let name = await findUserByName(email, collectionUser);
+        let user = await findUserByName(email, collectionUser);
+
+        let name = user && user.name ? user.name : '';
         if (!name) throw new Error('User does not exist');
 
 
@@ -253,7 +262,7 @@ router.post('/reset/password/:token', async (req, res) => {
             to: email,
             subject: 'File-O Reset Password',
             html: `
-            <img src="https://demo1.file-o.com/public/static/logo.png" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
+            <img src="${logoUrl}" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
             <h2 style="margin-left: 50%;">File-O</h2>
             <br/>
 
@@ -274,6 +283,8 @@ router.post('/reset/password/:token', async (req, res) => {
         };
 
         await updatePasswordByEmail(email, password, collectionUser);
+
+        await collectionSes.find().filter({ userId: user._id }).remove();
 
         transporter.sendMail(mailOptions, async function (error, info) {
             if (error) {

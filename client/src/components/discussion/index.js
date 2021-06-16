@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Refresh from '../../assets/refresh.svg';
 const Head = { width: '100%', textAlign: 'center', fontWeight: 700, color: '#0a3d62', fontSize: '16px', marginTop: '12px' };
 
 const Discussion = ({
     profile, id, message, setMessage, addComment, count, catId,
     offset, setOF, updateChat, updated, discussions, isEdt, isFile,
-    isP, isPM
+    isP, isPM, disabled, project
 }) => {
+
+    const [width, setWidth] = useState(0);
+
+    useEffect(() => {
+        updateWindowDimensions();
+        window.addEventListener('resize', updateWindowDimensions);
+        return () => window.removeEventListener('resize', updateWindowDimensions);
+    });
+
+    const updateWindowDimensions = () => setWidth(window.innerWidth);
+
 
     const renderDate = date => {
         var serverDate = date;
@@ -21,12 +32,12 @@ const Discussion = ({
         checkDate.setDate(checkDate.getDate() - 1);
         var strTime = `${checkDate < dt ? '' : `${date.slice(0, 10)} at `}${hours}:${minutes}  ${ampm}`;
         return strTime;
-    }
+    };
 
-    return <div className={`col-lg-4 col-12 shadow`}>
+    return width > 0 ? <div className={!project ? `col-lg-4 col-12 shadow` : 'col-lg-8 col-12 shadow'} style={{ backgroundColor: 'white' }}>
         <h6 style={Head}>DISCUSSION</h6>
         <div style={{ width: '100%', padding: '0px 12px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <p className="word-count" style={{ marginBottom: '-4px' }}>Last Updated: {updated && renderDate(updated)}</p>
+            <p className="word-count" style={{ marginBottom: '-4px', fontStyle: 'italic' }}>Last Updated: {updated && renderDate(updated)}</p>
             <h6 className={`order`} onClick={e => updateChat()} style={{ position: 'relative', marginTop: '0px', marginBottom: '0px', marginLeft: '6px' }}>
                 <div style={{ width: '14px', height: '14px', backgroundImage: `url('${Refresh}')` }} />
             </h6>
@@ -49,11 +60,11 @@ const Discussion = ({
                 marginBottom: '24px'
             }}>No Comments</p>}
         <div style={{ width: '100%', padding: '0px 16px' }}>
-            <textarea type="text" placeholder="Type commment here" className="comment" value={message}
-                onChange={e => e.target.value.split(' ').length <= 500 && setMessage(e.target.value)}
+            <textarea type="text" placeholder="Type commment here" className="comment" value={message} disabled={disabled}
+                onChange={e => e.target.value.split(' ').length <= 500 && setMessage(e.target.value)} autoFocus={width >= 992}
                 onKeyPress={e => {
                     if (e.key === 'Enter' && !e.shiftKey) {
-                        message && addComment({ _id: id, message, isEdt, isFile, category: catId, isP, isPM });
+                        message && !disabled && addComment({ _id: id, message, isEdt, isFile, category: catId, isP, isPM, project });
                         setMessage('');
                         e.preventDefault();
                     }
@@ -62,12 +73,12 @@ const Discussion = ({
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '0px 16px' }}>
             <p className="word-count">{message.split(" ").length} / 500</p>
-            <button className="btn btn-primary btn-send" type="button" disabled={!message} onClick={e => {
-                message && addComment({ _id: id, message, isEdt, isFile, category: catId, isP, isPM })
+            <button className="btn btn-primary btn-send" type="button" disabled={disabled ? disabled : !message} onClick={e => {
+                message && !disabled && addComment({ _id: id, message, isEdt, isFile, category: catId, isP, isPM, project })
                 setMessage('');
             }}>Send</button>
         </div>
-    </div>
+    </div> : <></>
 };
 
 export default Discussion;

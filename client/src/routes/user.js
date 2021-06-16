@@ -12,7 +12,7 @@ const ProjectsListPage = lazy(() => import('../pages/projects/projectsListPage')
 const FileListPageP = lazy(() => import('../pages/project_files/fileListPage'));
 const CreateTaskPage = lazy(() => import('../pages/notes/createTaskPage'));
 const FileVersionPageP = lazy(() => import('../pages/project_files/fileViewPage'));
-const UserFileVersionP = lazy(() => import('../pages/project_files/userFileCategoriesPage'));
+const UserFileVersionP = lazy(() => import('../pages/project_files/fileCategoriesPage'));
 const CatListPageU = lazy(() => import('../pages/user_category/catListPage'));
 const FileListPageU = lazy(() => import('../pages/user_files/fileListPage'));
 const FileListPageS = lazy(() => import('../pages/user_files/sharedFileListPage'));
@@ -27,6 +27,7 @@ const NoteListPage = lazy(() => import('../pages/notes/noteListPage'));
 const NoteDetailsPage = lazy(() => import('../pages/notes/notePage'));
 const NoteViewPage = lazy(() => import('../pages/notes/noteViewPage'));
 const CatListPageC = lazy(() => import('../pages/client_category/catListPage'));
+const PollListPage = lazy(() => import('../pages/poll/pollListPage'));
 const FileListPageC = lazy(() => import('../pages/client_files/fileListPage'));
 const FileViewPageC = lazy(() => import('../pages/client_files/fileViewPage'));
 const FileListPageCS = lazy(() => import('../pages/sharedCat/fileListPage'));
@@ -39,6 +40,7 @@ const AllFilePage = lazy(() => import('../pages/fileCategoriesPage'));
 const NoteFileView = lazy(() => import('../pages/notes/noteFileViewPage'));
 const PlanListPage = lazy(() => import('../pages/plans/planListPage'));
 const PlanViewPage = lazy(() => import('../pages/plans/planPage'));
+const FileAnnc = lazy(() => import('../pages/project_files/annoucementPage'));
 
 export default () => <Switch>
     <Route exact path='/user/dashboard' component={DashboardPage} />
@@ -50,7 +52,9 @@ export default () => <Switch>
     <Route path='/organization/:id/projects/:pId/files/:catId/list' component={FileListPageP} />
     <Route path='/organization/:id/projects/:pId/file/:_id' component={FileVersionPageP} />
     <Route path='/organization/:id/projects/:pId/version/file/:_id' component={FileVersionPageP} />
-    <Route path='/organization/:id/projects/:_id/categories/list' component={UserFileVersionP} />
+    <Route path='/organization/:id/projects/:_id/categories/list/page/:num' component={UserFileVersionP} />
+    <Route path='/organization/:id/poll/list/page/:num' component={PollListPage} />
+    <Route path='/organization/:id/projects/:pId/announcement/:_id' component={FileAnnc} />
     <Route path='/organization/:id/user/:_id/projects/list' component={ProjectsListPage} />
     <Route path='/organization/:id/myspace/user/:_id/category/list' component={CatListPageU} />
     <Route path='/organization/:id/shared/:_id/category/:catId/list' component={FileListPageS} />
@@ -71,7 +75,9 @@ export default () => <Switch>
     <Route path='/organization/:id/user/:_id/clients/files/:catId/list' component={FileListPageC} />
     <Route path='/organization/:id/user/:uId/clients/file/:_id' component={FileViewPageC} />
     <Route path='/organization/:id/user/:uId/favourites' component={FvrFileList} />
+    <Route path='/organization/:id/myspace/user/:_id/category/data/:term/list' component={CatListPageU} />
     <Route path='/organization/:id/sharedby/:_id/category/:catId/list' component={FileListPageCS} />
+    <Route path='/organization/:id/sharedby/:_id/parentCategory/:pCat/category/:catId/list' component={FileListPageCS} />
     <Route path='/organization/:id/sharedby/:uId/file/:_id' component={FileViewPageCS} />
     <Route path='/organization/:_id/upload/limit' component={ErrorLimit} />
     <Route path='/organization/:_id/myspace/limit' component={ErrorLimitU} />

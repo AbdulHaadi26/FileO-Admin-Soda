@@ -1,11 +1,13 @@
-import { userConstants, employeeConstants } from "../constants";
+import { employeeConstants } from "../constants";
 import api from '../../utils/api';
 import history from '../../utils/history';
 import Token from './token';
 import { ModalProcess } from "./profileActions";
-const { GPErr } = userConstants;
+import { logOut } from "./userActions";
 const { EErr, GEISuc, EReq, ESuc, GASuc } = employeeConstants;
-const empList = { data: [], count: 0 };
+const empList = {
+    data: [], count: 0
+};
 
 export const fetchEmp = data => async dispatch => {
     try {
@@ -19,8 +21,11 @@ export const fetchEmp = data => async dispatch => {
             empList.count = res1.data.userCount;
             dispatch({ type: GASuc, payload: empList });
             dispatch({ type: ESuc });
-        } else dispatch({ type: EErr });
-    } catch{ dispatch({ type: GPErr }); }
+        } else dispatch({ type: GASuc, payload: empList });
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchEmpSearch = data => async dispatch => {
@@ -35,8 +40,11 @@ export const fetchEmpSearch = data => async dispatch => {
             empList.count = res1.data.userCount;
             dispatch({ type: GASuc, payload: empList });
             dispatch({ type: ESuc });
-        } else dispatch({ type: EErr });
-    } catch{ dispatch({ type: GPErr }); }
+        } else dispatch({ type: GASuc, payload: empList });
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const getEmployee = data => async dispatch => {
@@ -49,7 +57,10 @@ export const getEmployee = data => async dispatch => {
             dispatch({ type: GEISuc, payload: data });
             dispatch({ type: ESuc });
         } else dispatch({ type: EErr });
-    } catch{ dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const transferData = data => async dispatch => {
@@ -59,5 +70,8 @@ export const transferData = data => async dispatch => {
         await api.post(`/employeeDT/transfer`, data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         dispatch(ModalProcess({ title: 'My Space', text: 'Employee storage space has been transfered.' }));
         history.push(`/organization/${data.org}/data/transfer/list`);
-    } catch{ dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }

@@ -1,5 +1,5 @@
 import { taskConstants } from '../constants';
-const { NTErr, NTSuc, NTClr, NTReq, NTLSuc, GNTSuc, NTCount, NTCountS } = taskConstants;
+const { NTErr, NTSuc, NTClr, NTReq, NTLSuc, GNTSuc, NTCount, NTCountS, NTLDel } = taskConstants;
 const iS = { isSuc: false, isErr: false, isL: false, count: 0, countS: 0 };
 
 export const TaskReducer = (state = iS, action) => {
@@ -12,6 +12,17 @@ export const TaskReducer = (state = iS, action) => {
         case GNTSuc: return { ...state, isL: false, isErr: false, isSuc: true, data: action.payload, rec: action.payloadExtra, count: action.count ? action.count : 0 }
         case NTCount: return { ...state, count: action.payload }
         case NTCountS: return { ...state, countS: action.payload }
+        case NTLDel:
+            let listTemp = state.list;
+            if (listTemp && listTemp.noteList && listTemp.count > 0) {
+                if (listTemp.noteList.length > 0) {
+                    listTemp.noteList = listTemp.noteList.filter(i => i._id !== action.payload._id);
+                    listTemp.count = listTemp.noteList.length;
+                }
+            }
+            return {
+                ...state, list: listTemp, isL: false
+            };
         default: return state;
     }
 };

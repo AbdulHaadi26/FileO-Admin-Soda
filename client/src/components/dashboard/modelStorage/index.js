@@ -2,21 +2,23 @@ import React, { lazy, useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import ModalBg from '../../containers/modalStrContainer';
 import Cross from '../../../assets/cross.svg';
-import { getPackages, updateOrganizationPackage } from '../../../redux/actions/organizationActions';
+import { getPackages } from '../../../redux/actions/organizationActions';
+import '../style.css';
+import { ModalProcess } from '../../../redux/actions/profileActions';
 const Storage = lazy(() => import('./storage'));
 const iG = { marginTop: '2px', width: '95%' };
-const mS = { width: '100%', textAlign: 'center', marginTop: '12px', fontSize: '18px', fontWeight: '400'};
+const mS = { width: '100%', textAlign: 'center', marginTop: '12px', fontSize: '18px', fontWeight: '400' };
 const tS = { marginTop: '12px', width: '90%', textAlign: 'left', fontWeight: 700, color: '#0a3d62', fontSize: '12px' };
 const eS = { marginTop: '16px', marginBottom: '12px', width: '90%', textAlign: 'left', fontWeight: 700, color: '#b33939', fontSize: '12px' };
 
 const Modal = ({
-    onhandleModal, data_uploaded, combined_plan, available, percent, packages, getPackages, updateOrganizationPackage, users, org
+    onhandleModal, data_uploaded, combined_plan, available, percent, packages, getPackages, org, submitData, active_plan, ModalProcess
 }) => {
     const [pkg, setPkg] = useState(''), [pkgs, setPkgs] = useState([]), [pkgVal, setPKGV] = useState(combined_plan), [pkgErr, setPErr] = useState(false), [pkgSErr, setPSErr] = useState(false);
 
     useEffect(() => {
-        data_uploaded && getPackages({ size: Math.floor(Math.round(data_uploaded)) });
-    }, [data_uploaded, getPackages]);
+        combined_plan && getPackages({ size: Math.floor(Math.round(combined_plan - 1)) });
+    }, [combined_plan, getPackages]);
 
     useEffect(() => {
         let pkges;
@@ -29,11 +31,21 @@ const Modal = ({
         setPkgs(pkges);
     }, [packages]);
 
+
     const submitForm = e => {
         e.preventDefault();
-        let data = { org: org, pkgId: pkg._id };
-        if (pkg && pkg._id) updateOrganizationPackage(data);
-    }
+        let data = {
+            org: org,
+            pkgId: pkg._id,
+            current_plan: active_plan._id,
+            price: (pkg.size - combined_plan) * 5
+        };
+        if (pkg && pkg._id && active_plan._id !== pkg._id && pkg.size > active_plan.size) submitData(data, pkg);
+        else if (active_plan._id === pkg._id) {
+            ModalProcess({ title: 'Storage', text: 'You have selected the plan which is your current active plan.', isErr: true });
+            onhandleModal(e);
+        }
+    };
 
     const onhandlePKG = e => {
         setPKGV(e.target.value);
@@ -41,7 +53,7 @@ const Modal = ({
         else if (e.target.value % 50 !== 0 && !pkgErr) setPErr(true);
 
         let tempP = pkgs, isBool = false;
-        if (e.target.value > data_uploaded) {
+        if (e.target.value > combined_plan) {
             setPSErr(false);
             if (tempP && tempP.length > 0 && e.target.value % 50 === 0) {
                 tempP.map(i => {
@@ -55,7 +67,7 @@ const Modal = ({
             if (isBool) setPErr(false);
             else setPErr(true);
         } else setPSErr(true);
-    }
+    };
 
     return <ModalBg handleModal={onhandleModal}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
@@ -78,19 +90,19 @@ const Modal = ({
                 </div>
             </div>
             <form className="col-lg-6" style={{ display: 'flex', flexDirection: 'column', margin: '18px 0px', alignItems: 'center', border: '2px solid #dfe6e9', borderRadius: '4px', padding: '24px 12px' }} onSubmit={submitForm}>
-                <h6 style={{ fontSize: '16px', color: 'grey', fontWeight: '400', textAlign: 'center' }}>Update Storage </h6>
+                <h6 style={{ fontSize: '16px', color: 'grey', fontWeight: '400', textAlign: 'center' }}>Upgrade Storage </h6>
                 <h6 style={tS}>STORAGE SIZE</h6>
                 <div className="input-group" style={iG}>
-                    <input type={'number'} min={Math.round(data_uploaded)} max={5000} step={50} className="form-control" placeholder={'Enter package'} value={pkgVal} onChange={e => onhandlePKG(e)} />
-                    <div class="input-group-append">
-                        <span class="input-group-text">GB</span>
+                    <input type={'number'} min={0} max={5000} step={50} className="form-control" placeholder={'Enter package'} value={pkgVal} onChange={e => onhandlePKG(e)} />
+                    <div className="input-group-append">
+                        <span className="input-group-text">GB</span>
                     </div>
                 </div>
                 {!pkgSErr && pkgErr && <div style={eS}>The package size should be a multiple of 50 e.g 50, 100, 150...upto 5000.</div>}
-                {pkgSErr && <div style={eS}>The package size should be greater than the current used space.</div>}
+                {pkgSErr && <div style={eS}>The package size should be greater than the current plan.</div>}
                 <h6 style={tS}>PRICE</h6>
                 <h6 style={{ fontSize: '16px', color: 'green', fontWeight: '500', width: '90%' }}>
-                    PKR {((users * Number(pkg && pkg.pricePerUser ? pkg.pricePerUser : 0)) + Number(pkg && pkg.price ? pkg.price : 0))}
+                    PKR {pkg ? ((Number(pkg.size) - Number(combined_plan))  * 5) : 0}
                 </h6>
                 <button className="btn btn-str">Upgrade</button>
             </form>
@@ -104,4 +116,4 @@ const mapStateToProps = state => {
     }
 }
 
-export default connect(mapStateToProps, { getPackages, updateOrganizationPackage })(Modal);
+export default connect(mapStateToProps, { getPackages, ModalProcess })(Modal);

@@ -6,6 +6,7 @@ const nodeMailer = require('nodemailer');
 const uuidv4 = require('uuid/v4');
 const JWT = require('../middlewares/jwtAuth');
 
+
 const {
     getSodaDatabase,
     getConnection,
@@ -22,8 +23,7 @@ const {
 } = require('../schemas/projects');
 
 const {
-    createSession, deleteSessionByUserS,
-    isSessionActive
+    createSession, deleteSessionByUserS
 } = require('../schemas/session');
 
 const {
@@ -45,6 +45,7 @@ const {
     getAllUFileLimitDashU,
     getAllFileCountD,
     getAllFileCountOrgU,
+    getAllFileCountTypeU,
 } = require('../schemas/userFile');
 
 const {
@@ -64,15 +65,12 @@ const {
     getAllFileLimitDashA,
     getAllFileLimitDashU,
     getAllFileDashCountU,
+    getAllFileCountType,
 } = require('../schemas/file');
 
 const {
     findOrganizationById, findOrganizationByIdUpt,
 } = require('../schemas/organization');
-
-const {
-    getAllRolesCount,
-} = require('../schemas/role');
 
 const {
     putPresignedUrl,
@@ -92,11 +90,11 @@ const {
 } = require('../schemas/sharedFile');
 
 const {
-    getProjectManagerUserCats
+    getProjectManagerUserCats,
+    getAssignedUserCats
 } = require('../schemas/projectCategory');
 
 const {
-    getAssignedUserCats,
     getAllProjectCountP
 } = require('../schemas/projectAssigned');
 
@@ -109,6 +107,7 @@ const {
     createFile,
     updateVersionId
 } = require('../schemas/userFile');
+const { baseUrl, fileOUrl, logoUrl } = require('../constants');
 
 router.post('/request', JWT, async (req, res) => {
     var connection;
@@ -146,27 +145,30 @@ router.post('/register', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionSet, collectionFile, collectionSets] = [
-            await soda.createCollection('users'), await soda.createCollection('orgs'),
-            await soda.createCollection('sets'), await soda.createCollection('user_files'), await soda.createCollection('sets')
-        ];
+        const collectionUser = await soda.createCollection('user');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionSet = await soda.createCollection('sets');
+        const collectionFile = await soda.createCollection('user_files');
 
-        const { name, email, password, _id, ids, active, image, mimeType, fileSize, userType, clientView } = req.body;
-        var p1 = findOrganizationByIdUpt(_id, collectionOrg);
-        var p2 = getSetting(collectionSet);
-        var p3 = getAllUserCount(_id, collectionUser);
-        var [org, set, uCount] = [await p1, await p2, await p3];
+
+        const { name, email, password, _id, active, image, mimeType, fileSize, userType, clientView } = req.body;
+
+        let org = await findOrganizationById(_id, collectionOrg);
+        let set = await getSetting(collectionSet);
+        let uCount = await getAllUserCount(_id, collectionUser);
+
         var size = 1;
         if (set && set.maxImageSize) size = Number(set.maxImageSize);
+
         if (!validateMime(mimeType, size, fileSize)) throw new Error('Image not supported');
 
         if (uCount && org && org.userCount && uCount >= org.userCount) throw new Error('Organization users limit reached');
 
         let orgName = org.name;
         let userData = {
-            name, email, password, roles: ids, current_employer: _id, created: Date.now(),
+            name, email, password, current_employer: _id, created: Date.now(),
             active, orgName, image, userType: Number(userType), clientView, bucketName: req.token.bucket,
-            storageAvailable: 1, storageUploaded: 0, storageLimit: 1
+            storageAvailable: 1, storageUploaded: 0, storageLimit: 1, flag: 'B'
         };
 
         userData.password = await bcrypt.hash(userData.password, 10);
@@ -174,7 +176,7 @@ router.post('/register', JWT, async (req, res) => {
         let user = await findUserByEmail(email, collectionUser);
 
         if (!user) {
-            const fileName = `${uuidv4()}${name.toLowerCase().split(' ').join('-')}`;
+            const fileName = `${name.toLowerCase().split(' ').join('-')}`;
             let key = await createUser(userData, collectionUser);
 
             userData.image = generateFileName(fileName, org._id, key);
@@ -185,6 +187,7 @@ router.post('/register', JWT, async (req, res) => {
                 "July", "August", "September", "October", "November", "December"][mydate.getMonth()];
             let str = mydate.getDate() + '-' + month + '-' + mydate.getFullYear();
             let sql = `INSERT INTO user_billing (orgId, userId, start_date) VALUES ('${req.token.org}', '${key}', '${str}')`;
+
             await connection.execute(sql);
 
             const url = await putPresignedUrl(key, userData.image, req.token.bucket);
@@ -197,7 +200,7 @@ router.post('/register', JWT, async (req, res) => {
             };
 
             let keyF = await createFile(fileData, collectionFile);
-            const fileN = `${uuidv4()}${fileData.name.toLowerCase().split(' ').join('-')}`;
+            const fileN = fileData.name;
             fileData.url = generateFileNameU(fileN, req.token.org, '', keyF, key);
 
             fileData._id = keyF;
@@ -205,7 +208,7 @@ router.post('/register', JWT, async (req, res) => {
 
             await copyBasicDoc('GetStarted.pdf', fileData.url, req.token.bucket);
 
-            let html = `  <img src="https://demo1.file-o.com/public/static/logo.png" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
+            let html = `  <img src="${logoUrl}" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
             <h2 style="margin-left: 50%;">File-O</h2>
             <br/>
             <h3 style="font-weight:400;">Dear <b>${name}</b>,</h3>
@@ -217,9 +220,9 @@ router.post('/register', JWT, async (req, res) => {
             <p>This is suggested that you should change the password of your File-O account as soon as you logged in to the application.</p>
 
             <br/>
-            <a style="text-decoration: none; background-color:#54a0ff; margin-right:12px; color: white; padding:12px 36px; border-radius: 8px;" rel="noopener noreferrer" target="_blank" href="https://demo1login.file-o.com/">Login here</a>
+            <a style="text-decoration: none; background-color:#54a0ff; margin-right:12px; color: white; padding:12px 36px; border-radius: 8px;" rel="noopener noreferrer" target="_blank" href="${baseUrl}">Login here</a>
             
-            <p><br/>Thank you for using File-O. Questions or concerns? Contact <a rel="noopener noreferrer" target="_blank" href="https://www.file-o.com/support">File-O Support</a>.</p>
+            <p><br/>Thank you for using File-O. Questions or concerns? Contact <a rel="noopener noreferrer" target="_blank" href="${fileOUrl}/support">File-O Support</a>.</p>
             <br/>
 
             Sincerely,
@@ -228,7 +231,7 @@ router.post('/register', JWT, async (req, res) => {
             <p><b><u>Please note:</u></b> This e-mail was sent from an address that cannot accept incoming e-mail. Please use the appropriate link above if you need to contact us again.</p>
             <p>File-O is an affiliate of CWare Technologies.</p>`
 
-            let set = await getSetting(collectionSets);
+            let set = await getSetting(collectionSet);
 
             let transporter = nodeMailer.createTransport({
                 service: set.service,
@@ -250,9 +253,10 @@ router.post('/register', JWT, async (req, res) => {
                     console.log(error);
                 }
 
-                if (url) res.json({ user: userData, url: url });
-                else throw new Error('Could not upload user image.');
             });
+
+            if (url) res.json({ user: userData, url: url });
+            else throw new Error('Could not upload user image.');
         } else throw new Error('User is already registered.');
     } catch (e) {
         console.log(e);
@@ -263,8 +267,8 @@ router.post('/register', JWT, async (req, res) => {
 });
 
 function generateFileNameU(fileName, org, catId, _id, userId) {
-    return catId ? `FileO/organization/${org}/user/myspace/${userId}/category/${catId}/files/${_id}/${fileName}` :
-        `FileO/organization/${org}/user/myspace/${userId}/category/files/${_id}/${fileName}`;
+    return catId ? `FileO/organization/${org}/user/myspace/${userId}/category/${catId}/files/${_id}/${uuidv4()}/${fileName}` :
+        `FileO/organization/${org}/user/myspace/${userId}/category/files/${_id}/${uuidv4()}/${fileName}`;
 }
 
 router.post('/registerN', JWT, async (req, res) => {
@@ -275,26 +279,24 @@ router.post('/registerN', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionFile, collectionSets] = [
-            await soda.createCollection('users'), await soda.createCollection('orgs'),
-            await soda.createCollection('user_files'), await soda.createCollection('sets')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionFile = await soda.createCollection('user_files');
+        const collectionSets = await soda.createCollection('sets');
 
-        const { name, email, password, _id, ids, active, userType, clientView } = req.body;
+        const { name, email, password, _id, active, userType, clientView } = req.body;
 
-        var p1 = findOrganizationByIdUpt(_id, collectionOrg);
-        var p2 = getAllUserCount(_id, collectionUser);
-
-        let [org, uCount] = [await p1, await p2];
+        let org = await findOrganizationByIdUpt(_id, collectionOrg);
+        let uCount = await getAllUserCount(_id, collectionUser);
 
         var orgName = org.name;
 
         if (uCount && org && org.userCount && uCount >= org.userCount) throw new Error('Organization users limit reached');
 
         let userData = {
-            name: name, email: email, password: password, roles: ids, current_employer: _id, created: Date.now(),
+            name: name, email: email, password: password, current_employer: _id, created: Date.now(),
             active: active, orgName: orgName, userType: Number(userType), clientView: clientView, bucketName: req.token.bucket,
-            storageAvailable: 1, storageUploaded: 0, storageLimit: 1
+            storageAvailable: 1, storageUploaded: 0, storageLimit: 1, flag: 'B'
         };
 
         userData.password = await bcrypt.hash(password, 10);
@@ -318,7 +320,7 @@ router.post('/registerN', JWT, async (req, res) => {
             };
 
             let keyF = await createFile(fileData, collectionFile);
-            const fileName = `${uuidv4()}${fileData.name.toLowerCase().split(' ').join('-')}`;
+            const fileName = fileData.name;
             fileData.url = generateFileNameU(fileName, req.token.org, '', keyF, key);
 
             fileData._id = keyF;
@@ -326,8 +328,7 @@ router.post('/registerN', JWT, async (req, res) => {
 
             await copyBasicDoc('GetStarted.pdf', fileData.url, req.token.bucket);
 
-
-            let html = `<img src="https://demo1.file-o.com/public/static/logo.png" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
+            let html = `<img src="${logoUrl}" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
             <h2 style="margin-left: 50%;">File-O</h2>
             <br/>
             <h3 style="font-weight:400;">Dear <b>${name}</b>,</h3>
@@ -339,9 +340,9 @@ router.post('/registerN', JWT, async (req, res) => {
             <p>This is suggested that you should change the password of your File-O account as soon as you logged in to the application.</p>
 
             <br/>
-            <a style="text-decoration: none; background-color:#54a0ff; margin-right:12px; color: white; padding:12px 36px; border-radius: 8px;" rel="noopener noreferrer" target="_blank" href="https://demo1login.file-o.com/">Login here</a>
+            <a style="text-decoration: none; background-color:#54a0ff; margin-right:12px; color: white; padding:12px 36px; border-radius: 8px;" rel="noopener noreferrer" target="_blank" href="${baseUrl}">Login here</a>
             
-            <p><br/>Thank you for using File-O. Questions or concerns? Contact <a rel="noopener noreferrer" target="_blank" href="https://www.file-o.com/support">File-O Support</a>.</p>
+            <p><br/>Thank you for using File-O. Questions or concerns? Contact <a rel="noopener noreferrer" target="_blank" href="${fileOUrl}/support">File-O Support</a>.</p>
             <br/>
 
             Sincerely,
@@ -372,8 +373,9 @@ router.post('/registerN', JWT, async (req, res) => {
                     console.log(error);
                 }
 
-                res.json({ user: userData });
             });
+
+            res.json({ user: userData });
         } else throw new Error('User is already registered');
     } catch (e) {
         console.log(e);
@@ -391,33 +393,34 @@ router.post('/auth', async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionSes] = [
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('sessions')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionSes = await soda.createCollection('sessions');
 
         const { email, password, screen } = req.body;
 
         let user = await findUserByCredentials(email, password, collectionUser, collectionOrg);
+
         if (!user) throw new Error('User is not registered');
-        if (!user.current_employer.active) throw new Error('Organization is not active');
-
-        let sessionActive = await isSessionActive(user._id, screen >= 992 ? 0 : 1, collectionSes);
-
-        if (sessionActive) throw new Error('Session is already active');
+        if (user.flag === 'B' && !user.current_employer.active) throw new Error('Organization is not active');
 
         await deleteSessionByUserS(user._id, screen >= 992 ? 0 : 1, collectionSes);
 
-        let token = jwt.sign({ _id: user._id, org: user.current_employer._id, bucket: user.bucketName }, process.env.SECRET, { expiresIn: '1d' });
+        let token;
+
+        if (user.flag === 'P')
+            token = jwt.sign({ _id: user._id, bucket: user.bucketName }, process.env.SECRET, { expiresIn: '1d' });
+        else {
+            token = jwt.sign({ _id: user._id, org: user.current_employer._id, bucket: user.bucketName }, process.env.SECRET, { expiresIn: '1d' });
+        }
 
         let date = new Date(Date.now());
-        date = date.addHours(1);
+        date = date.addHours(0.5);
 
         let data = {
             userId: user._id, name: user.name, email: user.email, screen: screen >= 992 ? 0 : 1,
-            current_employer: user.current_employer._id,
-            active: true, orgName: user.current_employer.name, last_updated: date,
+            current_employer: user.current_employer ? user.current_employer._id : '',
+            active: true, orgName: user.current_employer ? user.current_employer.name : '', last_updated: date,
             token: token
         };
 
@@ -426,7 +429,7 @@ router.post('/auth', async (req, res) => {
         res.status(200).json({ token: token });
     } catch (e) {
         console.log(e);
-        res.status(500).json({ error: e.message });
+        res.json({ error: e.message });
     } finally {
         await closeConnection(connection);
     }
@@ -435,7 +438,7 @@ router.post('/auth', async (req, res) => {
 Date.prototype.addHours = function (h) {
     this.setTime(this.getTime() + (h * 60 * 60 * 1000));
     return this;
-}
+};
 
 router.post('/logout', async (req, res) => {
     var connection;
@@ -447,8 +450,8 @@ router.post('/logout', async (req, res) => {
 
         const token = req.headers['authorization'];
 
-        const [collectionSes, collectionBL] = [await soda.createCollection('sessions'), await soda.createCollection('black_list')];
-
+        const collectionSes = await soda.createCollection('sessions');
+        const collectionBL = await soda.createCollection('black_list');
 
         let date = new Date(Date.now());
         date = date.addHours(24);
@@ -479,16 +482,53 @@ router.get('/profile', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionRoles, collectionCats] = [
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('roles'),
-            await soda.createCollection('cats'),
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
 
-        var user = await getProfile(req.token._id, collectionUser, collectionOrg, collectionRoles, collectionCats);
+        let user = await getProfile(req.token._id, collectionUser, collectionOrg);
+
+        if (user.flag === 'P') {
+            user.bucketSize = await getBucketSize(req.token.bucket);
+        }
+
         if (!user) throw new Error('User is not registered');
+
         res.json({ user: user });
+    } catch (e) {
+        console.log(e);
+        res.json({ error: e.message });
+    } finally {
+        await closeConnection(connection);
+    }
+});
+
+router.get('/bill', JWT, async (req, res) => {
+    var connection;
+    try {
+        connection = await getConnection();
+        if (!connection) throw new Error('Connection has not been intialized yet.');
+        const soda = await getSodaDatabase(connection);
+        if (!soda) throw new Error('Soda database has not been intialized yet.');
+
+        const collectionBilling = await soda.createCollection('billing_ep');
+        const collectionUser = await soda.createCollection('users');
+
+        let user = await findUserById(req.token._id, collectionUser);
+
+        let billCount;
+        if (user && user.flag === 'P') {
+            billCount = await collectionBilling.find().filter({ orgId: req.token._id, status: 'Unpaid', date: { $lte: date } }).count();
+        } else {
+
+            billCount = await collectionBilling.find().filter({ orgId: req.token.org, status: 'Unpaid', date: { $lte: date } }).count();
+        }
+
+        let date = new Date(Date.now());
+
+        let count = 0;
+        if (billCount && billCount.count) count = billCount.count;
+
+        res.json({ count, date });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -505,11 +545,10 @@ router.post('/updateProfile', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionRoles, collectionCats, collectionSharedN, collecitonShared] = [
-            await soda.createCollection('users'), await soda.createCollection('orgs'),
-            await soda.createCollection('roles'), await soda.createCollection('cats'),
-            await soda.createCollection('shrs_note'), await soda.createCollection('shrs')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionSharedN = await soda.createCollection('shrs_note');
+        const collecitonShared = await soda.createCollection('shrs');
 
         const { _id } = req.token;
         const { field, value } = req.body;
@@ -517,13 +556,26 @@ router.post('/updateProfile', JWT, async (req, res) => {
         if (field === 'email') {
             let userE = await findUserByEmail(value, collectionUser);
             if (userE) {
-                let userTemp = await getProfile(_id, collectionUser, collectionOrg, collectionRoles, collectionCats);
+                let userTemp = await getProfile(_id, collectionUser, collectionOrg);
                 res.json({ user: userTemp });
             }
         }
-        const user = await updateValue(_id, field, value, collectionUser, collectionOrg, collectionRoles, collectionCats);
 
-        if (field === 'name') [await updateNoteByUserName(_id, value, collectionSharedN), await updateNoteWithUserName(_id, value, collectionSharedN), await updateFileByUserName(_id, value, collecitonShared), await updateFileWithUserName(_id, value, collecitonShared)];
+        const user = await updateValue(_id, field, value, collectionUser, collectionOrg);
+
+        if (user.flag === 'P') {
+            user.bucketSize = await getBucketSize(req.token.bucket);
+        }
+
+        if (user.flag === 'B') {
+            if (field === 'name') {
+                await updateNoteByUserName(_id, value, collectionSharedN);
+                await updateNoteWithUserName(_id, value, collectionSharedN);
+                await updateFileByUserName(_id, value, collecitonShared);
+                await updateFileWithUserName(_id, value, collecitonShared);
+            }
+        }
+
         if (!user) throw new Error('User profile not found');
 
         return res.json({ user: user });
@@ -545,35 +597,35 @@ router.get('/dashboard/admin', JWT, async (req, res) => {
 
         const { org, _id } = req.token;
 
-        const [collectionUser, collectionOrg, collectionFiles, collectionRoles, collectionCats, collectionPkgs,
-            collectionUFiles, collectionPFiles, collectionCFiles, collectionUCat, collectionPCat, collectionCCat, collectionAss,
-            collectionPRoles
-        ] = [
-                await soda.createCollection('users'), await soda.createCollection('orgs'), await soda.createCollection('files'),
-                await soda.createCollection('roles'), await soda.createCollection('cats'), await soda.createCollection('pkgs'),
-                await soda.createCollection('user_files'), await soda.createCollection('proj_files'), await soda.createCollection('client_files'),
-                await soda.createCollection('user_cats'), await soda.createCollection('proj_cats'), await soda.createCollection('client_cats'),
-                await soda.createCollection('proj_assigned'), await soda.createCollection('proj_roles')
-            ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionFiles = await soda.createCollection('files');
+        const collectionCats = await soda.createCollection('cats');
+        const collectionPkgs = await soda.createCollection('pkgs');
+        const collectionUFiles = await soda.createCollection('user_files');
+        const collectionPFiles = await soda.createCollection('proj_files');
+        const collectionCFiles = await soda.createCollection('client_files');
+        const collectionUCat = await soda.createCollection('user_cats');
+        const collectionPCat = await soda.createCollection('proj_cats');
+        const collectionCCat = await soda.createCollection('client_cats');
 
-        let assCats = await getAssignedUserCats(_id, collectionAss, collectionPRoles);
+        let assCats = await getAssignedUserCats(_id, collectionPCat);
 
-        const p1 = getAllUserCount(org, collectionUser);
-        const p2 = findOrganizationById(org, collectionOrg, collectionPkgs);
-        const p3 = getAllCatFileCount(org, collectionFiles);
-        const p4 = getAllFileLimitDashA(org, collectionFiles, collectionCats);
-        const p5 = getAllRolesCount(org, collectionRoles);
-        const p6 = getAllFileCountOrgU(org, collectionUFiles);
-        const p7 = getAllFileCountOrgP(org, collectionPFiles);
-        const p8 = getAllFileCountOrgC(org, collectionCFiles);
-        const p9 = getAllPFileLimitDashU(assCats, collectionPFiles, collectionPCat);
-        const p10 = getAllUFileLimitDashU(_id, collectionUFiles, collectionUCat);
-        const p11 = getAllCFileLimitDashU(_id, collectionCFiles, collectionCCat);
-        const [userCount, organ, fileCount, files, roleCount, userFileCount, projectFileCount, clientFileCount, pfiles, ufiles, cfiles] = [
-            await p1, await p2, await p3, await p4, await p5, await p6, await p7, await p8, await p9, await p10, await p11
-        ];
+        let userCount = await getAllUserCount(org, collectionUser);
+        let organ = await findOrganizationById(org, collectionOrg, collectionPkgs);
+        let fileCount = await getAllCatFileCount(org, collectionFiles);
+        let files = await getAllFileLimitDashA(org, collectionFiles, collectionCats);
+        let userFileCount = await getAllFileCountOrgU(org, collectionUFiles);
+        let projectFileCount = await getAllFileCountOrgP(org, collectionPFiles);
+        let clientFileCount = await getAllFileCountOrgC(org, collectionCFiles);
+        let pfiles = await getAllPFileLimitDashU(assCats, collectionPFiles, collectionPCat);
+        let ufiles = await getAllUFileLimitDashU(_id, collectionUFiles, collectionUCat);
+        let cfiles = await getAllCFileLimitDashU(_id, collectionCFiles, collectionCCat);
+        let docCount = await getAllFileCountType(org, ['pdf', 'word', 'excel', 'powerpoint', 'text'], collectionFiles);
+        let mediaCount = await getAllFileCountType(org, ['video', 'audio'], collectionFiles);
+        let otherCount = await getAllFileCountType(org, ['others'], collectionFiles);
+        let imageCount = await getAllFileCountType(org, ['image'], collectionFiles);
 
-        
         let fileList = [].concat(files, pfiles, ufiles, cfiles), tempList = [];
 
         if (fileList && fileList.length > 0) {
@@ -585,9 +637,9 @@ router.get('/dashboard/admin', JWT, async (req, res) => {
         let count = fileCount + userFileCount + projectFileCount + clientFileCount;
         if (!organ) throw new Error('Could not find organization details');
 
-        
         organ.bucketSize = await getBucketSize(req.token.bucket);
-        res.json({ success: true, userCount: userCount, fileCount: count, org: organ, fileList: tempList, roleCount: roleCount });
+
+        res.json({ success: true, userCount: userCount, fileCount: count, org: organ, fileList: tempList, docCount, mediaCount, imageCount, otherCount, orgFileCount: fileCount });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -611,9 +663,10 @@ router.post('/imageUrl/sign', JWT, async (req, res) => {
 
         if (set && set.maxImageSize) size = Number(set.maxImageSize);
         if (!validateMime(mimeType, size, fileSize)) throw new Error('Image type not supported');
-        const fileName = `${uuidv4()}${image.toLowerCase().split(' ').join('-')}`;
-        const key = generateFileName(fileName, org, id);
-        const url = await putPresignedUrl(id, key, req.token.bucket);
+
+        let fileName = `${image.toLowerCase().split(' ').join('-')}`;
+        let key = generateFileName(fileName, org, id);
+        let url = await putPresignedUrl(id, key, req.token.bucket);
 
         if (url) res.json({ url: url, key: key });
         else throw new Error('Could not upload user image');
@@ -633,18 +686,20 @@ router.post('/uploadImage', JWT, async (req, res, next) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionRoles, collectionCats] = [
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('roles'),
-            await soda.createCollection('cats'),
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
 
         const { _id, key } = req.body;
         const userT = await findUserById(_id, collectionUser);
+
         if (!userT) throw new Error('User profile not found');
         if (userT.image) await deleteObject(userT.image, req.token.bucket);
-        const user = await updateValue(_id, 'image', key, collectionUser, collectionOrg, collectionRoles, collectionCats);
+
+        const user = await updateValue(_id, 'image', key, collectionUser, collectionOrg);
+
+        if (user.flag === 'P') {
+            user.bucketSize = await getBucketSize(req.token.bucket);
+        }
 
         if (!user) throw new Error('User profile not found');
         res.json({ user: user });
@@ -664,13 +719,16 @@ router.get('/dashboard/manager', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFiles, collectionProj, collectionUFiles, collectionCFiles,
-            collectionPFiles, collectionCat, collectionUCat, collectionPCat, collectionCCat, collectionEmpReq] = [
-                await soda.createCollection('files'), await soda.createCollection('projs'), await soda.createCollection('user_files'),
-                await soda.createCollection('client_files'), await soda.createCollection('proj_files'), await soda.createCollection('cats'),
-                await soda.createCollection('user_cats'), await soda.createCollection('proj_cats'), await soda.createCollection('client_cats'),
-                await soda.createCollection('emp_reqs')
-            ];
+        const collectionFiles = await soda.createCollection('files');
+        const collectionProj = await soda.createCollection('projs');
+        const collectionUFiles = await soda.createCollection('user_files');
+        const collectionCFiles = await soda.createCollection('client_files');
+        const collectionPFiles = await soda.createCollection('proj_files');
+        const collectionCat = await soda.createCollection('cats');
+        const collectionUCat = await soda.createCollection('user_cats');
+        const collectionPCat = await soda.createCollection('proj_cats');
+        const collectionCCat = await soda.createCollection('client_cats');
+        const collectionEmpReq = await soda.createCollection('emp_reqs');
 
         const { _id, org } = req.token;
         let { cats } = req.query;
@@ -678,18 +736,20 @@ router.get('/dashboard/manager', JWT, async (req, res) => {
         let pIds = await getAllProjectsOfUser(_id, collectionProj);
         let assCats = await getProjectManagerUserCats(pIds, collectionPCat);
 
-        const p1 = getAllFileLimitDashU(org, cats, collectionFiles, collectionCat);
-        const p2 = getAllFileCountD(_id, collectionUFiles);
-        const p3 = getAllProjectCountM(_id, collectionProj);
-        const p4 = getAllFileDashCountU(org, cats, collectionFiles);
-        const p5 = getAllPFileDashCountU(assCats, collectionPFiles);
-        const p6 = getAllCFileDashCountU(_id, collectionCFiles);
-        const p7 = getAllPFileLimitDashU(assCats, collectionPFiles, collectionPCat);
-        const p8 = getAllUFileLimitDashU(_id, collectionUFiles, collectionUCat);
-        const p9 = getAllCFileLimitDashU(_id, collectionCFiles, collectionCCat);
-        const p10 = getEmpReqByUserId(_id, collectionEmpReq);
-        const [files, fileCount, projectCount, ufileCount, pfileCount, cfileCount, pfiles, ufiles, cfiles, empReq] =
-            [await p1, await p2, await p3, await p4, await p5, await p6, await p7, await p8, await p9, await p10];
+        let files = await getAllFileLimitDashU(org, cats, collectionFiles, collectionCat);
+        let fileCount = await getAllFileCountD(_id, collectionUFiles);
+        let projectCount = await getAllProjectCountM(_id, collectionProj);
+        let ufileCount = await getAllFileDashCountU(org, cats, collectionFiles);
+        let pfileCount = await getAllPFileDashCountU(assCats, collectionPFiles);
+        let cfileCount = await getAllCFileDashCountU(_id, collectionCFiles);
+        let pfiles = await getAllPFileLimitDashU(assCats, collectionPFiles, collectionPCat);
+        let ufiles = await getAllUFileLimitDashU(_id, collectionUFiles, collectionUCat);
+        let cfiles = await getAllCFileLimitDashU(_id, collectionCFiles, collectionCCat);
+        let empReq = await getEmpReqByUserId(_id, collectionEmpReq);
+        let docCount = await getAllFileCountTypeU(_id, ['pdf', 'word', 'excel', 'powerpoint', 'text'], collectionUFiles);
+        let mediaCount = await getAllFileCountTypeU(_id, ['video', 'audio'], collectionUFiles);
+        let otherCount = await getAllFileCountTypeU(_id, ['others'], collectionUFiles);
+        let imageCount = await getAllFileCountTypeU(_id, ['image'], collectionUFiles);
 
         let fileList = [].concat(files, pfiles, ufiles, cfiles), tempList = [];
 
@@ -700,7 +760,7 @@ router.get('/dashboard/manager', JWT, async (req, res) => {
         }
 
         let count = fileCount + ufileCount + pfileCount + cfileCount;
-        res.json({ success: true, fileList: tempList, fileCount: count, projectCount, empReq: empReq });
+        res.json({ success: true, fileList: tempList, fileCount: count, projectCount, empReq: empReq, orgFileCount: fileCount, docCount, mediaCount, otherCount, imageCount });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -717,35 +777,40 @@ router.get('/dashboard/user', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFiles, collectionUFiles, collectionAss, collectionRoles, collectionCFiles,
-            collectionPFiles, collectionCat, collectionUCat, collectionPCat, collectionCCat, collectionEmpReq] = [
-                await soda.createCollection('files'), await soda.createCollection('user_files'), await soda.createCollection('proj_assigned'),
-                await soda.createCollection('proj_roles'), await soda.createCollection('client_files'),
-                await soda.createCollection('proj_files'), await soda.createCollection('cats'), await soda.createCollection('user_cats'),
-                await soda.createCollection('proj_cats'), await soda.createCollection('client_cats'), await soda.createCollection('emp_reqs')
-            ];
+        const collectionFiles = await soda.createCollection('files');
+        const collectionUFiles = await soda.createCollection('user_files');
+        const collectionAss = await soda.createCollection('proj_assigned');
+        const collectionCFiles = await soda.createCollection('client_files');
+        const collectionPFiles = await soda.createCollection('proj_files');
+        const collectionCat = await soda.createCollection('cats');
+        const collectionUCat = await soda.createCollection('user_cats');
+        const collectionPCat = await soda.createCollection('proj_cats');
+        const collectionCCat = await soda.createCollection('client_cats');
+        const collectionEmpReq = await soda.createCollection('emp_reqs');
 
         const { _id, org } = req.token;
-        var { cats } = req.query;
+        let { cats } = req.query;
 
-        let assCats = await getAssignedUserCats(_id, collectionAss, collectionRoles);
+        let assCats = await getAssignedUserCats(_id, collectionPCat);
 
-        const p1 = getAllFileLimitDashU(org, cats, collectionFiles, collectionCat);
-        const p2 = getAllFileCountD(_id, collectionUFiles);
-        const p3 = getAllProjectCountP(_id, collectionAss);
-        const p4 = getAllFileDashCountU(org, cats, collectionFiles);
-        const p5 = getAllPFileDashCountU(assCats, collectionPFiles);
-        const p6 = getAllCFileDashCountU(_id, collectionCFiles);
-        const p7 = getAllPFileLimitDashU(assCats, collectionPFiles, collectionPCat);
-        const p8 = getAllUFileLimitDashU(_id, collectionUFiles, collectionUCat);
-        const p9 = getAllCFileLimitDashU(_id, collectionCFiles, collectionCCat);
-        const p10 = getEmpReqByUserId(_id, collectionEmpReq);
-        const [files, fileCount, projectCount, ufileCount, pfileCount, cfileCount, pfiles, ufiles, cfiles, empReq] =
-            [await p1, await p2, await p3, await p4, await p5, await p6, await p7, await p8, await p9, await p10];
+        let files = await getAllFileLimitDashU(org, cats, collectionFiles, collectionCat);
+        let fileCount = await getAllFileCountD(_id, collectionUFiles);
+        let projectCount = await getAllProjectCountP(_id, collectionAss);
+        let ufileCount = await getAllFileDashCountU(org, cats, collectionFiles);
+        let pfileCount = await getAllPFileDashCountU(assCats, collectionPFiles);
+        let cfileCount = await getAllCFileDashCountU(_id, collectionCFiles);
+        let pfiles = await getAllPFileLimitDashU(assCats, collectionPFiles, collectionPCat);
+        let ufiles = await getAllUFileLimitDashU(_id, collectionUFiles, collectionUCat);
+        let cfiles = await getAllCFileLimitDashU(_id, collectionCFiles, collectionCCat);
+        let empReq = await getEmpReqByUserId(_id, collectionEmpReq);
+        let docCount = await getAllFileCountTypeU(_id, ['pdf', 'word', 'excel', 'powerpoint', 'text'], collectionUFiles);
+        let mediaCount = await getAllFileCountTypeU(_id, ['video', 'audio'], collectionUFiles);
+        let otherCount = await getAllFileCountTypeU(_id, ['others'], collectionUFiles);
+        let imageCount = await getAllFileCountTypeU(_id, ['image'], collectionUFiles);
 
         let totalFile = [].concat(files, pfiles, ufiles, cfiles);
         let count = fileCount + ufileCount + pfileCount + cfileCount;
-        res.json({ success: true, fileList: totalFile, fileCount: count, projectCount, empReq: empReq });
+        res.json({ success: true, fileList: totalFile, fileCount: count, projectCount, empReq: empReq, orgFileCount: fileCount, docCount, mediaCount, otherCount, imageCount });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -762,21 +827,18 @@ router.get('/recentFilesDate', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [
-            collectionRecfs, collectionFiles, collectionURecfs,
-            collectionUFiles, collectionPRecfs, collectionPFiles
-        ] = [
-                await soda.createCollection('recfs'), await soda.createCollection('files'), await soda.createCollection('urecfs'),
-                await soda.createCollection('user_files'), await soda.createCollection('precfs'), await soda.createCollection('proj_files')
-            ];
+        const collectionRecfs = await soda.createCollection('recfs');
+        const collectionFiles = await soda.createCollection('files');
+        const collectionURecfs = await soda.createCollection('urecfs');
+        const collectionUFiles = await soda.createCollection('user_files');
+        const collectionPRecfs = await soda.createCollection('precfs');
+        const collectionPFiles = await soda.createCollection('proj_files');
 
         const { _id } = req.token;
 
-        const p1 = RectF.getMostRecentDate(_id, collectionRecfs, collectionFiles);
-        const p2 = URectF.getMostRecentDate(_id, collectionURecfs, collectionUFiles);
-        const p3 = PRectF.getMostRecentDate(_id, collectionPRecfs, collectionPFiles);
-
-        const [files, userFiles, projectFiles] = [await p1, await p2, await p3];
+        let files = await RectF.getMostRecentDate(_id, collectionRecfs, collectionFiles);
+        let userFiles = await URectF.getMostRecentDate(_id, collectionURecfs, collectionUFiles);
+        let projectFiles = await PRectF.getMostRecentDate(_id, collectionPRecfs, collectionPFiles);
 
         let fileList = [].concat(files, userFiles, projectFiles);
         return res.json({ files: fileList });
@@ -793,7 +855,7 @@ function validateMime(type, size, expectedSize) {
 }
 
 function generateFileName(fileName, id, _id) {
-    return `FileO/organization/${id}/images/user/${_id}/${fileName}`;
+    return `FileO/organization/${id}/images/user/${_id}/${uuidv4()}/${fileName}`;
 }
 
 module.exports = router;

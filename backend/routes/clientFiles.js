@@ -38,11 +38,14 @@ const {
     getAllFileQueryLimitC,
     getAllFileCountC,
     getAllFileLimitC,
-    updateDetails
+    updateDetails,
+    findFileByNameC,
+    updateCat
 } = require('../schemas/clientFile');
 
 const {
-    getAllCats, getAllCCatUptCountS
+    getAllCats,
+    getAllCCatUptCountS
 } = require('../schemas/clientsCategory');
 
 const {
@@ -63,14 +66,18 @@ const {
 } = require('../schemas/organization');
 
 const {
-    findUserById, updateStorage
+    findUserById,
+    updateStorage
 } = require('../schemas/user');
 
 const {
     getSetting
 } = require('../schemas/setting');
 
-const { filesChanged, updatedChanged } = require('../schemas/notification');
+const {
+    filesChanged,
+    updatedChanged
+} = require('../schemas/notification');
 
 router.get('/getFileCount', JWT, async (req, res) => {
     var connection;
@@ -78,10 +85,12 @@ router.get('/getFileCount', JWT, async (req, res) => {
         connection = await getConnection();
         if (!connection) throw new Error('Connection has not been intialized yet.');
         const soda = await getSodaDatabase(connection);
+
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
         const collectionFile = await soda.createCollection('client_files');
         const { cat, type, pId } = req.query;
+
         let count = await getAllFileCount(pId, cat, type, collectionFile);
 
         return res.json({ fileCount: count });
@@ -101,25 +110,25 @@ router.get('/getFile', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionFvrFile, collectionCats, collectionFileV, collectionNotifs] = [
-            await soda.createCollection('client_files'), await soda.createCollection('favr_files'),
-            await soda.createCollection('client_cats'), await soda.createCollection('file_views'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionFvrFile = await soda.createCollection('favr_files');
+        const collectionCats = await soda.createCollection('client_cats')
+        const collectionFileV = await soda.createCollection('file_views');
+        const collectionNotifs = await soda.createCollection('notifs');
 
-        const { _id, pId } = req.query;
+        const { _id } = req.query;
 
         await updateValue(_id, 'updated', false, collectionFile);
         await updatedChanged(_id, req.token._id, collectionNotifs);
-        const p1 = getFile(_id, collectionFile, collectionCats);
-        const p2 = getAllCats(pId, collectionCats);
-        const p3 = isFavorite(_id, req.token._id, collectionFvrFile);
-        var [file, catList, isF] = [await p1, await p2, await p3];
+
+        let file = await getFile(_id, collectionFile, collectionCats);
+        let isF = await isFavorite(_id, req.token._id, collectionFvrFile);
 
         let data = { orgId: req.token.org, userId: req.token._id, fileId: _id, fileSize: file.size, type: 3, created: Date.now(), date: new Date() };
+
         await createFileView(data, collectionFileV);
 
-        res.json({ file: file, catList: catList, isF: isF });
+        res.json({ file: file, isF: isF });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -136,20 +145,19 @@ router.get('/getFileShared', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionUser, collectionCats, collectionFileV, collectionNotifs] = [
-            await soda.createCollection('client_files'), await soda.createCollection('users'),
-            await soda.createCollection('client_cats'), await soda.createCollection('file_views'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionUser = await soda.createCollection('users');
+        const collectionCats = await soda.createCollection('client_cats');
+        const collectionFileV = await soda.createCollection('file_views');
+        const collectionNotifs = await soda.createCollection('notifs');
 
         const { _id, pId } = req.query;
 
-
         await updatedChanged(_id, req.token._id, collectionNotifs);
-        const p1 = getFile(_id, collectionFile, collectionCats);
-        const p2 = getAllCats(pId, collectionCats);
-        const p3 = getAllFileVersion(_id, collectionFile, collectionUser);
-        let [file, catList, versions] = [await p1, await p2, await p3];
+
+        let file = await getFile(_id, collectionFile, collectionCats);
+        let catList = await getAllCats(pId, collectionCats);
+        let versions = await getAllFileVersion(_id, collectionFile, collectionUser);
 
         let data = { orgId: req.token.org, userId: req.token._id, fileId: _id, fileSize: file.size, type: 3, created: Date.now(), date: new Date() };
         await createFileView(data, collectionFileV);
@@ -171,9 +179,8 @@ router.post('/download/:_id', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionFileV] = [
-            await soda.createCollection('client_files'), await soda.createCollection('file_views')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionFileV = await soda.createCollection('file_views');
 
         const { _id } = req.params;
         let file = await downloadFile(_id, collectionFile);
@@ -198,18 +205,17 @@ router.get('/getFileDetails', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionUser, collectionCats, collectionNotifs] = [
-            await soda.createCollection('client_files'), await soda.createCollection('users'), await soda.createCollection('client_cats'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionCats = await soda.createCollection('client_cats');
+        const collectionNotifs = await soda.createCollection('notifs');
 
         const { _id, pId } = req.query;
 
         await updateValue(_id, 'updated', false, collectionFile);
         await updatedChanged(_id, req.token._id, collectionNotifs);
-        const p1 = getFile(_id, collectionFile, collectionCats);
-        const p2 = getAllCats(pId, collectionCats);
-        const [file, catList] = [await p1, await p2];
+
+        let file = await getFile(_id, collectionFile, collectionCats);
+        let catList = await getAllCats(pId, collectionCats);
 
         return res.json({ file: file, catList: catList });
     } catch {
@@ -228,17 +234,17 @@ router.get('/getFileShare', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionUser, collectionCats, collectionNotifs] = [
-            await soda.createCollection('client_files'), await soda.createCollection('users'), await soda.createCollection('client_cats'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionUser = await soda.createCollection('users');
+        const collectionCats = await soda.createCollection('client_cats');
+        const collectionNotifs = await soda.createCollection('notifs');
 
         const { _id } = req.query;
 
         await updatedChanged(_id, req.token._id, collectionNotifs);
-        const p1 = getFile(_id, collectionFile, collectionCats);
-        const p3 = getAllFileVersion(_id, collectionFile, collectionUser);
-        let [file, versions] = [await p1, await p3];
+
+        let file = await getFile(_id, collectionFile, collectionCats);
+        let versions = await getAllFileVersion(_id, collectionFile, collectionUser);
 
         return res.json({ file: file, versions: versions });
     } catch (e) {
@@ -257,7 +263,8 @@ router.get('/getFiles', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionCat] = [await soda.createCollection('client_files'), await soda.createCollection('client_cats')];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionCat = await soda.createCollection('client_cats');
 
         const { pId, cat, type, string } = req.query;
         let fileList;
@@ -287,7 +294,8 @@ router.get('/searchFileCount', JWT, async (req, res) => {
         const collectionFile = await soda.createCollection('client_files');
 
         const { string, pId, cat, type } = req.query;
-        var count = await getAllFileQueryCount(pId, string, cat, type, collectionFile);
+
+        let count = await getAllFileQueryCount(pId, string, cat, type, collectionFile);
 
         return res.json({ fileCount: count });
     } catch (e) {
@@ -309,7 +317,8 @@ router.get('/searchFiles', JWT, async (req, res) => {
         const collectionFile = await soda.createCollection('client_files');
 
         const { offset, string, pId, cat, type } = req.query;
-        var fileList = await getAllFileQueryLimit(offset, pId, string, cat, type, collectionFile);
+
+        let fileList = await getAllFileQueryLimit(offset, pId, string, cat, type, collectionFile);
 
         return res.json({ files: fileList });
     } catch (e) {
@@ -349,9 +358,10 @@ router.post('/updateFile', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionCats, collectionFvrFile] = [
-            await soda.createCollection('client_files'), await soda.createCollection('client_cats'), await soda.createCollection('favr_files')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionCats = await soda.createCollection('client_cats');
+        const collectionFvrFile = await soda.createCollection('favr_files');
+
 
         const { name, description, _id, cat } = req.body;
 
@@ -359,17 +369,19 @@ router.post('/updateFile', JWT, async (req, res) => {
         let file;
 
         if (!fileDetails) throw new Error('File with this key does not exist');
-        if (fileDetails.name !== name) file = await findFileByName(_id, req.token.org, cat, collectionFile);
-        
-        if(file) throw new Error('File with this name already exists');
+        if (fileDetails.name !== name) file = await findFileByName(name, req.token._id, cat, collectionFile);
+
+        if (file) throw new Error('File with this name already exists');
 
         if (fileDetails.name !== name) await updateFvrName(_id, name, collectionFvrFile);
 
-        let category = await updateDetails(_id, name, description, cat, collectionFile);
+        file = '';
 
-        if(!category) throw new Error('File details could not be updated');
+        file = await updateDetails(_id, name, description, cat, collectionFile);
 
-        res.json({ success: true });
+        if (!file) throw new Error('File details could not be updated');
+
+        res.json({ file });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -386,17 +398,16 @@ router.post('/updateFilePerm', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionCats, collectionUser] = [
-            await soda.createCollection('client_files'), await soda.createCollection('client_cats'), await soda.createCollection('users')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionCats = await soda.createCollection('client_cats');
+        const collectionUser = await soda.createCollection('users');
 
         const { versioning, compare, active, uploadable, _id, pId } = req.body;
         await updateFilePerm(_id, active, versioning, compare, uploadable, collectionFile);
-        const p1 = getFile(_id, collectionCats, collectionFile);
-        const p2 = getAllCats(pId, collectionCats);
-        const p3 = getAllFileVersion(_id, collectionFile, collectionUser);
 
-        var [file, catList, versions] = [await p1, await p2, await p3];
+        let file = await getFile(_id, collectionCats, collectionFile);
+        let catList = await getAllCats(pId, collectionCats);
+        let versions = await getAllFileVersion(_id, collectionFile, collectionUser);
 
         res.json({ file: file, catList: catList, versions: versions });
     } catch (e) {
@@ -415,17 +426,17 @@ router.post('/deleteFile/:_id', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionOrg, collectionUser, collectionFvrFile, collectionNotifs] = [
-            await soda.createCollection('client_files'), await soda.createCollection('orgs'),
-            await soda.createCollection('users'), await soda.createCollection('favr_files'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionNotifs = await soda.createCollection('notifs');
+        const collectionUser = await soda.createCollection('users');
+        const collectionFvrFile = await soda.createCollection('favr_files');
 
         const { _id } = req.params;
         var file = await findCFileById(_id, collectionFile);
-        var p1 = findOrganizationByIdUpt(file.org, collectionOrg);
-        var p2 = findUserById(file.postedFor, collectionUser);
-        var [org, user] = [await p1, await p2];
+
+        let org = await findOrganizationByIdUpt(file.org, collectionOrg);
+        let user = await findUserById(file.postedFor, collectionUser);
 
         if (!file) throw new Error('File not found')
 
@@ -451,13 +462,17 @@ router.post('/deleteFile/:_id', JWT, async (req, res) => {
         userAvailable = userAvailable + Number(file.size);
         if (userAvailable > limit) userAvailable = Number(limit);
         if (userUploaded < 0) userUploaded = 0;
+
         await deleteObject(file.url, req.token.bucket);
         await deleteFile(file._id, collectionFile);
 
-        [await deleteFvrFiles(file._id, collectionFvrFile), await filesChanged([file._id], collectionNotifs)];
+        await deleteFvrFiles(file._id, collectionFvrFile);
+        await filesChanged([file._id], collectionNotifs);
+
         await updatePackageDetails(req.token.org, uploaded_data, available, percent_left, percent_used, collectionOrg);
         await updateStorage(req.token._id, userUploaded, userAvailable, collectionUser);
-        let userData = findUserById(req.token._id, collectionUser);
+
+        let userData = await findUserById(req.token._id, collectionUser);
 
         res.json({ user: userData });
     } catch (e) {
@@ -476,19 +491,21 @@ router.post('/deleteFiles', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionUser, collectionOrg, collectionFvrFile, collectionNotifs] = [
-            await soda.createCollection('client_files'), await soda.createCollection('users'),
-            await soda.createCollection('orgs'), await soda.createCollection('favr_files'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionNotifs = await soda.createCollection('notifs');
+        const collectionUser = await soda.createCollection('users');
+        const collectionFvrFile = await soda.createCollection('favr_files');
 
         const { arr } = req.body;
-        var p0 = findUserById(req.token._id, collectionUser);
-        var p1 = findMultipleFilesArr(arr, collectionFile);
-        var p2 = findOrganizationByIdUpt(req.token.org, collectionOrg);
-        var [user, files, organ] = [await p0, await p1, await p2];
+
+        let user = await findUserById(req.token._id, collectionUser);
+        let files = await findMultipleFilesArr(arr, collectionFile);
+        let organ = await findOrganizationByIdUpt(req.token.org, collectionOrg);
+
         if (!user) return res.json({ error: 'User not found' });
         if (!organ) return res.json({ error: 'Organization not found' });
+
         var uploaded_data = Number(organ.data_uploaded)
         var available = Number(organ.available);
         var combined_plan = Number(organ.combined_plan);
@@ -516,10 +533,47 @@ router.post('/deleteFiles', JWT, async (req, res) => {
         }));
 
         await updatePackageDetails(req.token.org, uploaded_data, available, percent_left, percent_used, collectionOrg);
-        [await updateStorage(req.token._id, userUploaded, userAvailable, collectionUser), await filesChanged(arr, collectionNotifs),
-        await deleteMultipleFilesArr(arr, collectionFile), arr && arr.length > 0 && await deleteMultipleFilesArrFvr(arr, collectionFvrFile)]
+        await updateStorage(req.token._id, userUploaded, userAvailable, collectionUser);
+        await filesChanged(arr, collectionNotifs);
+        await deleteMultipleFilesArr(arr, collectionFile);
+        arr && arr.length > 0 && await deleteMultipleFilesArrFvr(arr, collectionFvrFile);
 
         return res.json({ success: 'File Deleted' });
+    } catch (e) {
+        console.log(e);
+        res.json({ error: e.message });
+    } finally {
+        await closeConnection(connection);
+    }
+});
+
+router.post('/updateFileCat', JWT, async (req, res) => {
+    var connection;
+    try {
+        connection = await getConnection();
+        if (!connection) throw new Error('Connection has not been intialized yet.');
+        const soda = await getSodaDatabase(connection);
+        if (!soda) throw new Error('Soda database has not been intialized yet.');
+
+        const { cat, _id } = req.body;
+
+
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionCats = await soda.createCollection('client_cats');
+
+        let fileDetails = await getFile(_id, collectionFile, collectionCats);
+
+        if (!fileDetails) throw new Error('File with this key does not exist');
+
+        let file = await findFileByNameC(fileDetails.name, req.token._id, cat, collectionFile, collectionCats);
+
+        if (file) return res.json({ error: 'Client File', mainFile: fileDetails._id, file: file._id, cat: cat })
+
+        let upt = await updateCat(_id, cat, collectionFile);
+
+        if (!upt) throw new Error('File Details not updated');
+
+        res.json({ success: true });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -536,13 +590,17 @@ router.post('/updateFilesCat', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionFvrFile] = [await soda.createCollection('client_files'), await soda.createCollection('favr_files')];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionFvrFile = await soda.createCollection('favr_files');
 
         const { value, arr } = req.body;
 
-        var lIds = await getAllNamesByArr(arr, value, collectionFile);
+        let lIds = await getAllNamesByArr(arr, value, collectionFile);
 
-        if (lIds && lIds.length > 0) [await updateFilesCat(lIds, value, collectionFile), await updateMultipleFilesArrFvr(lIds, collectionFvrFile)]
+        if (lIds && lIds.length > 0) {
+            await updateFilesCat(lIds, value, collectionFile);
+            await updateMultipleFilesArrFvr(lIds, collectionFvrFile);
+        }
         res.json({ success: true });
     } catch (e) {
         console.log(e);
@@ -560,16 +618,16 @@ router.post('/copyFiles', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionOrg, collectionSets] = [
-            await soda.createCollection('client_files'), await soda.createCollection('orgs'), await soda.createCollection('sets')
-        ];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionSets = await soda.createCollection('sets');
 
         const { arr, catId } = req.body;
 
-        var fileSize = 5;
-        const p1 = getSetting(collectionSets);
-        const p2 = findMultipleFilesArr(arr, collectionFile);
-        var [set, files] = [await p1, await p2];
+        let fileSize = 5;
+
+        let set = await getSetting(collectionSets);
+        let files = await findMultipleFilesArr(arr, collectionFile);
 
         if (set && set.maxFileSize) fileSize = Number(set.maxFileSize);
 
@@ -582,19 +640,20 @@ router.post('/copyFiles', JWT, async (req, res) => {
                     contact: file.contact, bucketName: req.token.bucket, isVersion: false, version: 0, created: Date.now()
                 };
 
-                var p3 = findFileByName(fileData.name, req.token.org, catId, collectionFile);
-                var p4 = findOrganizationByIdUpt(req.token.org, collectionOrg);
-                var [f, organ] = [await p3, await p4];
+                let f = await findFileByName(fileData.name, req.token._id, catId, collectionFile);
+                let organ = await findOrganizationByIdUpt(req.token.org, collectionOrg);
 
                 if (!f && fileData.size < fileSize && organ.available > fileData.size) {
                     let key = await createFile(fileData, collectionFile);
                     const fl = file.url;
                     const type = fl.split('.').slice(-1);
-                    const fileName = `${uuidv4()}${fileData.name.toLowerCase().split(' ').join('-')}.${type}`;
+                    const fileName = `${fileData.name}.${type}`;
                     fileData.url = generateFileName(fileName, file.org, catId, key, file.postedFor);
 
                     await updateUrl(key, fileData.url, collectionFile);
+
                     const url = await copyObject(file.url, fileData.url, req.token.bucket);
+
                     if (url) await updateOrganizationStorage(file.org, organ.data_uploaded, organ.available, organ.combined_plan, file.size, collectionOrg);
                     else await deleteFile(file._id, collectionFile);
                 }
@@ -639,10 +698,12 @@ router.get('/getFilesC', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionCats] = [await soda.createCollection('client_files'), await soda.createCollection('client_cats')];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionCats = await soda.createCollection('client_cats');
 
         const { offset, pId, type } = req.query;
-        var fileList = await getAllFileLimitC(offset, pId, type, collectionFile, collectionCats);
+
+        let fileList = await getAllFileLimitC(offset, pId, type, collectionFile, collectionCats);
 
         return res.json({ files: fileList });
     } catch (e) {
@@ -664,7 +725,8 @@ router.get('/searchFileCountC', JWT, async (req, res) => {
         const collectionFile = await soda.createCollection('client_files');
 
         const { string, pId, type } = req.query;
-        var count = await getAllFileQueryCountC(pId, string, type, collectionFile);
+
+        let count = await getAllFileQueryCountC(pId, string, type, collectionFile);
 
         return res.json({ fileCount: count });
     } catch (e) {
@@ -683,10 +745,11 @@ router.get('/searchFilesC', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionCats] = [await soda.createCollection('client_files'), await soda.createCollection('client_cats')];
+        const collectionFile = await soda.createCollection('client_files');
+        const collectionCats = await soda.createCollection('client_cats');
 
         const { offset, string, pId, type } = req.query;
-        var fileList = await getAllFileQueryLimitC(offset, pId, string, type, collectionFile, collectionCats);
+        let fileList = await getAllFileQueryLimitC(offset, pId, string, type, collectionFile, collectionCats);
 
         return res.json({ files: fileList });
     } catch (e) {
@@ -698,7 +761,7 @@ router.get('/searchFilesC', JWT, async (req, res) => {
 });
 
 function generateFileName(fileName, org, catId, _id, userId) {
-    return `FileO/organization/${org}/user/${userId}/myclients/category/${catId}/files/${_id}/${fileName}`;
+    return `FileO/organization/${org}/user/${userId}/myclients/category/${catId}/files/${_id}/${uuidv4()}/${fileName}`;
 }
 
 async function updateOrganizationStorage(org, d_u, avb, cb_p, size, collectionOrg) {

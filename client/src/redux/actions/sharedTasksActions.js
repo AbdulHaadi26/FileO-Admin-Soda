@@ -1,11 +1,11 @@
 
-import { userConstants, employeeConstants, taskConstants } from "../constants";
+import { employeeConstants, taskConstants } from "../constants";
 import api from '../../utils/api';
 import Token from './token';
 import { ModalProcess } from "./profileActions";
-const { GPErr } = userConstants;
+import { logOut } from "./userActions";
 const { EErr, EReq, ESuc, GESuc, GASuc } = employeeConstants;
-const { NTErr, NTReq, NTLSuc, NTSuc, NTCountS } = taskConstants;
+const { NTErr, NTReq, NTLSuc, NTSuc, NTCountS, NTLDel } = taskConstants;
 
 var empList = { data: [], count: 0 }, assgList = { data: [], count: 0 }, list = { data: [], count: 0 };
 
@@ -25,14 +25,36 @@ export const registerTask = data => async dispatch => {
             dispatch(ModalProcess({ title: 'Share Task', text: 'Task has been shared with the user.' }));
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+}
+
+export const transferOwnership = data => async dispatch => {
+    try {
+        dispatch({ type: EReq });
+        Token();
+        let res = await api.post("/task/transfer", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        if (!res.data.error) {
+            dispatch({ type: NTLDel, payload: { _id: data.noteId } });
+            dispatch(ModalProcess({ title: 'Task', text: 'The task transfer has been successfully completed.' }));
+        }
+        else dispatch(ModalProcess({ title: 'Task', text: 'The task transfer could not be completed.', isErr: true }));
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const updateTaskCount = () => async dispatch => {
     try {
         var res = await api.get(`/share_task/updateNoteCount`, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         if (res.data.noteCount !== null && !res.data.error) dispatch({ type: NTCountS, payload: res.data.noteCount });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const fetchEmp = data => async dispatch => {
@@ -47,8 +69,11 @@ export const fetchEmp = data => async dispatch => {
             empList.count = res1.data.userCount;
             dispatch({ type: GASuc, payload: empList });
             dispatch({ type: ESuc });
-        } else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+        } else dispatch({ type: GASuc, payload: empList });
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchEmpSearch = data => async dispatch => {
@@ -62,9 +87,11 @@ export const fetchEmpSearch = data => async dispatch => {
             empList.count = res1.data.userCount;
             dispatch({ type: GASuc, payload: empList });
             dispatch({ type: ESuc });
-        }
-        else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+        } else dispatch({ type: GASuc, payload: empList });
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchAssigned = data => async dispatch => {
@@ -79,9 +106,11 @@ export const fetchAssigned = data => async dispatch => {
             assgList.count = res1.data.userCount;
             dispatch({ type: GESuc, payload: assgList });
             dispatch({ type: ESuc });
-        }
-        else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+        } else dispatch({ type: GESuc, payload: assgList });
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchAssignedSearch = data => async dispatch => {
@@ -96,8 +125,11 @@ export const fetchAssignedSearch = data => async dispatch => {
             assgList.count = res1.data.userCount;
             dispatch({ type: GESuc, payload: assgList });
             dispatch({ type: ESuc });
-        } else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+        } else dispatch({ type: GESuc, payload: assgList });
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchTasks = data => async dispatch => {
@@ -107,14 +139,17 @@ export const fetchTasks = data => async dispatch => {
         const p1 = api.get(`/share_task/getNoteCount`, { params: data, headers: { 'authorization': `${localStorage.getItem('token')}` } });
         const p2 = api.get("/share_task/getNote", { params: data, headers: { 'authorization': `${localStorage.getItem('token')}` }, });
         var [res1, res2] = [await p1, await p2];
-        if (res2.data.notes && res1.data.noteCount  !== null && !res1.data.error && !res2.data.error) {
+        if (res2.data.notes && res1.data.noteCount !== null && !res1.data.error && !res2.data.error) {
             list.data = res2.data.notes;
             list.count = res1.data.noteCount;
             dispatch({ type: NTLSuc, payload: list });
             dispatch({ type: NTSuc });
         }
         else dispatch({ type: NTErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchTasksSearch = data => async dispatch => {
@@ -131,7 +166,10 @@ export const fetchTasksSearch = data => async dispatch => {
             dispatch({ type: NTSuc });
         }
         else dispatch({ type: NTErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const deleteAssigned = data => async dispatch => {
@@ -150,7 +188,10 @@ export const deleteAssigned = data => async dispatch => {
             dispatch(ModalProcess({ title: 'Share Task', text: 'User has been un-assigned from the task.' }));
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const deleteAssignedAll = data => async dispatch => {
@@ -169,5 +210,8 @@ export const deleteAssignedAll = data => async dispatch => {
             dispatch(ModalProcess({ title: 'Share Task', text: 'All User has been un-assigned from the task.' }));
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }

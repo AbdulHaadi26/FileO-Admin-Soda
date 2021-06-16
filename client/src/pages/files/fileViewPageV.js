@@ -8,16 +8,12 @@ const ViewPage = ({ match, getFile, profile, isSuc, file, isErr }) => {
     const { _id, id, ver } = match.params, [tabNav, setTN] = useState(0);
 
     useEffect(() => {
-        var data = { _id: _id, org: id };
+        let data = { _id: _id, org: id };
         getFile(data);
     }, [getFile, _id, id]);
 
-    const getF = () => {
-        var data = { _id: _id, org: id };
-        getFile(data);
-    }
-
-    return <Container profile={profile} isSuc={isSuc && file} isErr={isErr} eT={'File Not Found'} num={9}> <ViewFile ver={Number(ver)} File={file} id={id} getF={getF} tabNav={tabNav} setTN={setTN} /> </Container>
+    return <Container profile={profile} isSuc={isSuc && file} isErr={isErr} eT={'File Not Found'} num={9}>
+         <ViewFile ver={Number(ver)} File={file} id={id} tabNav={tabNav} setTN={setTN} disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled} /> </Container>
 }
 
 const mapStateToProps = state => {

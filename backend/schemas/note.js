@@ -6,7 +6,9 @@ module.exports = {
 
     createNote: async (data, collection) => {
         try {
-            await collection.insertOneAndGet(data);
+            let doc = await collection.insertOneAndGet(data);
+            if (!doc) throw new Error('Note could not be created');
+            return doc.key;
         } catch (e) {
             throw new Error(e.message);
         }
@@ -14,7 +16,17 @@ module.exports = {
 
     findNoteByName: async (name, _id, value, collection) => {
         try {
-            const doc = await collection.find().fetchArraySize(0).filter({ userId: _id, title: name, isTask: { $ne: value } }).getOne();
+            const doc = await collection.find().fetchArraySize(0).filter({ postedby: _id, title: name, isTask: { $ne: value } }).getOne();
+            if (!doc) return false;
+            return true;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    findNoteByNameEQ: async (name, _id, value, collection) => {
+        try {
+            const doc = await collection.find().fetchArraySize(0).filter({ postedby: _id, title: name, isTask: { $eq: value } }).getOne();
             if (!doc) return false;
             return true;
         } catch (e) {
@@ -45,12 +57,12 @@ module.exports = {
     findNoteByIdF: async (_id, collection, collectionFile, collectionCats, collectionUser) => {
         try {
             const doc = await collection.find().fetchArraySize(0).key(_id).getOne();
-            if (!doc) throw new Error('File with this key does not exists');
+            if (!doc) throw new Error('Note with this key does not exists');
 
             let content = doc.getContent();
             content._id = doc.key;
-            let files = content.attachment, tempArr = [];
-            let catList = content.catList, tempCat = [];
+            var files = content.attachment, tempArr = [];
+            var catList = content.catList, tempCat = [];
 
             if (files && files.length > 0) await Promise.all(files.map(async document => {
                 if (document._id) {
@@ -127,19 +139,32 @@ module.exports = {
         }
     },
 
-    updateNote: async (key, title, text, color, fileList, recId, editable, catList, collection) => {
+    updateNote: async (key, title, color, fileList, recId, editable, catList, icon, collection) => {
         try {
             let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
             if (!docToReplace) return false;
             var note = docToReplace.getContent();
             note.title = title;
-            note.text = text;
             note.color = color;
             note.attachment = fileList;
             note.recId = recId;
             note.editable = editable;
             note.catList = catList;
+            note.icon = icon;
             await collection.find().fetchArraySize(0).key(key).replaceOne(note);
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateNoteT: async (key, userId, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+            var note = docToReplace.getContent();
+            note.postedby = userId;
+            await collection.find().fetchArraySize(0).key(key).replaceOne(note);
+            return note;
         } catch (e) {
             throw new Error(e.message);
         }

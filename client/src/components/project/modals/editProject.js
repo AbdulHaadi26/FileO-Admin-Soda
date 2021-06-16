@@ -7,7 +7,7 @@ const iG = { marginTop: '2px', width: '100%' };
 const tS = { width: '100%', textAlign: 'left' };
 const mS = { marginTop: '12px', marginLeft: '6px' };
 
-const Edit = ({ onhandleModal, Project, getList, updateProject }) => {
+const Edit = ({ onhandleModal, Project, updateProject }) => {
     const [text, setText] = useState(Project.name), [description, setDescription] = useState(Project.description),[cbActive, setCB] = useState(Project.active),
     [icon, setIcon] = useState(Project.icon ? Project.icon : 0);
 
@@ -24,7 +24,6 @@ const Edit = ({ onhandleModal, Project, getList, updateProject }) => {
             icon
         };
         await updateProject(data);
-        getList();
     };
 
     return <Modal handleModal={onhandleModal} isOpt={true}>

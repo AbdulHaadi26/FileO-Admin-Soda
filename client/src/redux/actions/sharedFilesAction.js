@@ -1,9 +1,9 @@
 
-import { userConstants, employeeConstants, fileConstants } from "../constants";
+import { employeeConstants, fileConstants } from "../constants";
 import api from '../../utils/api';
 import Token from './token';
 import { ModalProcess } from "./profileActions";
-const { GPErr } = userConstants;
+import { logOut } from "./userActions";
 const { EErr, EReq, ESuc, GASuc, GESuc } = employeeConstants;
 const { FErr, FReq, FSuc, GFSuc, GFISuc, FCountS } = fileConstants;
 
@@ -25,7 +25,10 @@ export const registerEmp = data => async dispatch => {
             dispatch(ModalProcess({ title: 'Share File', text: 'User File has been shared with the user.' }));
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const fetchEmp = data => async dispatch => {
@@ -41,14 +44,20 @@ export const fetchEmp = data => async dispatch => {
             dispatch({ type: GASuc, payload: empList });
             dispatch({ type: ESuc });
         } else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const updateFileCount = () => async dispatch => {
     try {
         var res = await api.get(`/share/updateFileCount`, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         if (res.data.fileCount !== null && !res.data.error) dispatch({ type: FCountS, payload: res.data.fileCount });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const fetchEmpSearch = data => async dispatch => {
@@ -64,7 +73,10 @@ export const fetchEmpSearch = data => async dispatch => {
             dispatch({ type: ESuc });
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchAssigned = data => async dispatch => {
@@ -81,7 +93,10 @@ export const fetchAssigned = data => async dispatch => {
             dispatch({ type: ESuc });
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchAssignedSearch = data => async dispatch => {
@@ -98,7 +113,10 @@ export const fetchAssignedSearch = data => async dispatch => {
             dispatch({ type: ESuc });
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchFile = data => async dispatch => {
@@ -111,7 +129,10 @@ export const fetchFile = data => async dispatch => {
             dispatch({ type: FSuc });
         }
         else dispatch({ type: FErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const getFile = data => async dispatch => {
@@ -125,7 +146,10 @@ export const getFile = data => async dispatch => {
             dispatch({ type: FSuc });
         }
         else dispatch({ type: FErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const deleteAssigned = data => async dispatch => {
@@ -144,7 +168,10 @@ export const deleteAssigned = data => async dispatch => {
             dispatch(ModalProcess({ title: 'Share File', text: 'User has been un-assigned from the user file.' }));
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const deleteAssignedAll = data => async dispatch => {
@@ -163,5 +190,8 @@ export const deleteAssignedAll = data => async dispatch => {
             dispatch(ModalProcess({ title: 'Share File', text: 'All User has been un-assigned from the user file.' }));
         }
         else dispatch({ type: EErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }

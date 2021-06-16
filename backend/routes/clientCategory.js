@@ -23,7 +23,8 @@ const {
 } = require('../schemas/clientsCategory');
 
 const {
-    getAllCatFileCount, getAllFileLimit,
+    getAllCatFileCount,
+    getAllFileLimit,
     getAllFileQueryLimit
 } = require('../schemas/clientFile');
 
@@ -41,16 +42,18 @@ router.post('/register', JWT, async (req, res) => {
             name, _id, uId, desc
         } = req.body;
 
-        const respData = {
+        let respData = {
             name: name, org: _id, uId: uId, description: desc,
             created: Date.now(), date: new Date(), updated: false
         };
 
         let cat = await findCatByName(name, uId, collectionCat);
         if (!cat) {
-            var data = await createCategory(respData, collectionCat);
+            let key = await createCategory(respData, collectionCat);
 
-            res.json({ cat: data });
+            respData._id = key;
+
+            res.json({ cat: respData });
         } else res.json('Category already exists in storage');
     } catch (e) {
         console.log(e);
@@ -116,9 +119,8 @@ router.get('/fetchCats', JWT, async (req, res) => {
         const collectionCat = await soda.createCollection('client_cats');
 
         const { _id, limit } = req.query;
-        var p1 = getAllCatLimit(_id, limit, collectionCat);
-        var p2 = getAllCatCount(_id, collectionCat);
-        var [cats, count] = [await p1, await p2];
+        let cats = await getAllCatLimit(_id, limit, collectionCat);
+        let count = await getAllCatCount(_id, collectionCat);
 
         res.json({ catList: cats, count: count });
     } catch (e) {
@@ -137,15 +139,20 @@ router.get('/fetchCombined', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionCat, collectionFile] = [await soda.createCollection('client_cats'), await soda.createCollection('client_files')];
+        const collectionCat = await soda.createCollection('client_cats');
+        const collectionFile = await soda.createCollection('client_files');
 
         const { _id, string, type } = req.query;
+
         let cats, fileList;
+
         if (string) {
-            [cats, fileList] = [await getAllQueryCatLimit(_id, string, collectionCat), await getAllFileQueryLimit(_id, string, '', type, collectionFile)];
+            cats = await getAllQueryCatLimit(_id, string, collectionCat);
+            fileList = await getAllFileQueryLimit(_id, string, '', type, collectionFile);
         }
         else {
-            [cats, fileList] = [await getAllCatLimit(_id, collectionCat), await getAllFileLimit(_id, '', type, collectionFile)];
+            cats = await getAllCatLimit(_id, collectionCat);
+            fileList = await getAllFileLimit(_id, '', type, collectionFile);
         }
         res.json({ catList: cats, files: fileList });
     } catch (e) {
@@ -167,9 +174,9 @@ router.get('/fetchCatsSearch', JWT, async (req, res) => {
         const collectionCat = await soda.createCollection('client_cats');
 
         const { _id, limit, string } = req.query;
-        let p1 = getAllQueryCatLimit(_id, limit, string, collectionCat);
-        let p2 = getAllQueryCatCount(_id, string, collectionCat);
-        let [cats, count] = [await p1, await p2];
+
+        let cats = await getAllQueryCatLimit(_id, limit, string, collectionCat);
+        let count = await getAllQueryCatCount(_id, string, collectionCat);
 
         res.json({ catList: cats, count: count });
     } catch (e) {
@@ -188,12 +195,12 @@ router.post('/deleteCat/:_id', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionCat, collectionFiles] = [
-            await soda.createCollection('client_cats'), await soda.createCollection('client_files')
-        ];
+        const collectionCat = await soda.createCollection('client_cats');
+        const collectionFiles = await soda.createCollection('client_files');
 
         const { _id } = req.params;
-        const count = await getAllCatFileCount(_id, collectionFiles);
+
+        let count = await getAllCatFileCount(_id, collectionFiles);
 
         if (count < 1) {
             await deleteCat(_id, collectionCat);
@@ -220,10 +227,13 @@ router.post('/updateCat', JWT, async (req, res) => {
         const collectionCat = await soda.createCollection('client_cats');
 
         const { value, _id, uId, desc } = req.body;
+
         let cat = await getCatById(_id, collectionCat);
 
         let category = cat.name !== value && await findCatByName(value, uId, collectionCat);
+
         if (category) return res.json({ error: 'Category already exists' });
+
         cat = await updateValue(_id, value, desc, collectionCat);
 
         return res.json({ cat: cat });

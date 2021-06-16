@@ -18,13 +18,14 @@ const Add = ({ setting, registerFile, id, _id, catId, onhandleModal }) => {
 
     const handleSubmit = e => {
         e.preventDefault();
-        if (name && fS && !errB && mimeT) {
+        if (name && fS && !errB) {
             setErrB(false); setErrF(false); setErrS(false); setErrN(false);
             let data = {
                 _id: id, name: name, size: size, mime: mimeT, postedby: _id,
                 org: id, category: catId, type: type,
                 description: description ? description : '', fName: fName
             };
+            onhandleModal();
             registerFile(data, file);
         } else {
             !name && setErrN(true);
@@ -79,7 +80,6 @@ const Add = ({ setting, registerFile, id, _id, catId, onhandleModal }) => {
                 onhandleModal();
             }}>Cancel</button>
             <button className="btn btn-primary" type="button" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
-                onhandleModal();
                 handleSubmit(e);
             }}>Upload</button>
         </div>

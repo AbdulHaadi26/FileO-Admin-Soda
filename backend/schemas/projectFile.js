@@ -34,6 +34,21 @@ module.exports = {
         }
     },
 
+    getAllCatFile: async (_id, collection) => {
+        try {
+            const doc = await collection.find().filter({ category: _id }).getDocuments();
+            let files = [];
+            if (doc) await Promise.all(doc.map(async document => {
+                let tempDoc = document.getContent();
+                tempDoc._id = document.key;
+                files.push(tempDoc);
+            }));
+            return files;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
     getMultipleFilesPid: async (list, collection) => {
         try {
             let files = [];
@@ -96,6 +111,26 @@ module.exports = {
             const doc = await collection.find().fetchArraySize(0).filter({ org: org, name: name, category: category }).getOne();
             if (doc) return true;
             return false;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    findFileByNameC: async (name, org, category, collection, collectionCat) => {
+        try {
+            const document = await collection.find().fetchArraySize(0).filter({ name: name, org: org, category: category }).getOne();
+            if (!document) return false;
+
+            let tempDoc = document.getContent();
+            tempDoc._id = document.key;
+            let doc = await collectionCat.find().fetchArraySize(0).key(tempDoc.category).getOne();
+            if (doc) {
+                let tempCat = doc.getContent();
+                tempCat._id = doc.key;
+                tempDoc.category = tempCat;
+            }
+            return tempDoc;
+
         } catch (e) {
             throw new Error(e.message);
         }
@@ -214,7 +249,7 @@ module.exports = {
         }
     },
 
-    getAllFileQueryLimitSP: async (pId, cat, type, auth, string, collection) => {
+    getAllFileQueryLimitSP: async (pId, cat, type, string, auth, collection) => {
         try {
             let doc;
             if (auth === 'true') {
@@ -310,12 +345,37 @@ module.exports = {
 
     resetVersion: async (_id, ver, collection) => {
         try {
-            const doc = await collection.find().filter({ versionId: _id, version: { $gt: Number(ver) } }).getDocuments();
-            if (doc) await Promise.all(doc.map(async document => {
+            var key;
+            let doc = await collection.find().filter({ versionId: _id, version: { $gt: Number(ver) } }).getDocuments();
+
+            if (doc) doc.map(async document => {
                 let tempDoc = document.getContent();
                 tempDoc.version = Number(tempDoc.version) - 1;
-                await collection.find().fetchArraySize(0).key(document.key).replaceOne(tempDoc);
-            }));
+                if (Number(tempDoc.version) === 0) {
+                    key = document.key;
+                }
+            });
+
+            if (key) {
+                if (doc) await Promise.all(doc.map(async document => {
+                    let tempDoc = document.getContent();
+                    tempDoc.versionId = key;
+                    tempDoc.version = Number(tempDoc.version) - 1;
+                    if (Number(tempDoc.version) === 0)
+                        tempDoc.isVersion = false;
+                    await collection.find().fetchArraySize(0).key(document.key).replaceOne(tempDoc);
+                }));
+            } else {
+                await Promise.all(doc.map(async document => {
+                    let tempDoc = document.getContent();
+                    tempDoc.version = Number(tempDoc.version) - 1;
+                    await collection.find().fetchArraySize(0).key(document.key).replaceOne(tempDoc);
+                }));
+            }
+
+            if (key)
+                return key;
+            else return false;
         } catch (e) {
             throw new Error(e.message);
         }
@@ -491,6 +551,75 @@ module.exports = {
                 arr.push(tempDoc);
             });
             return arr;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateCat: async (key, cat, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+            let document = docToReplace.getContent();
+            document.category = cat;
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+
+            let docArr = await collection.find().filter({ versionId: document.versionId, isVersion: true }).getDocuments();
+            if (docArr) await Promise.all(docArr.map(async doc => {
+                let docR = doc.getContent();
+                docR.category = cat;
+                await collection.find().fetchArraySize(0).key(doc.key).replaceOne(docR);
+            }));
+
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getVerCount: async (key, collection) => {
+        try {
+            let doc = await collection.find().filter({ versionId: key }).count();
+            if (!doc || doc.count === 0) throw new Error('Count not found');
+
+            return doc.count;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getAllFileVersionC: async (_id, collection) => {
+        try {
+            const doc = await collection.find().filter({ $query: { versionId: _id }, $orderby: { created: -1 } }).getDocuments();
+            let files = [];
+            if (doc) doc.map(document => {
+                let tempDoc = document.getContent();
+                tempDoc._id = document.key;
+                files.push(tempDoc);
+            });
+            return files;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateLatestVer: async (key, len, versionId, cat, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+
+            let document = docToReplace.getContent();
+            document.version = Number(len);
+            document.isVersion = true;
+            document.versionId = versionId;
+            document.category = cat;
+            if (Number(len) === 0) {
+                document.isVersion = false;
+            }
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
         } catch (e) {
             throw new Error(e.message);
         }

@@ -58,7 +58,7 @@
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-start;
-    margin-top: 20px;
+    margin-top: 12px;
     min-height: 22vh;
 }
 
@@ -137,5 +137,9 @@
     .e-w .e-i-w{
         flex-direction: column;
         justify-content: start;
+    }
+
+    .hide{
+        display: none;
     }
 }

@@ -1,0 +1,8 @@
+.strLW{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 12px;
+    min-height: 32vh;
+}

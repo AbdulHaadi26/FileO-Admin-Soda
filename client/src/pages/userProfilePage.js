@@ -9,7 +9,7 @@ const ProfilePage = ({ profile, isSuc, setting, isLS }) => {
     return <Container profile={profile} isSuc={profile && !isLS} num={0}>  {profile && profile.user &&
         <Profile tabNav={tabNav} setTN={setTN} User={profile.user} setting={isSuc && setting && setting.setting ? setting.setting : ''} />}
     </Container>
-}
+};
 
 const mapStateToProps = state => {
     return {
@@ -18,6 +18,6 @@ const mapStateToProps = state => {
         isSuc: state.setting.isSuc,
         setting: state.setting.data
     }
-}
+};
 
 export default connect(mapStateToProps)(ProfilePage);

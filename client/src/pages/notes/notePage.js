@@ -9,24 +9,28 @@ const NotePage = ({ getNote, profile, isErr, isSuc, note, rec, match, discussion
     const { id, _id, nId } = match.params, [tabNav, setTN] = useState(0), [offset, setOF] = useState(12), [updated, setUpdated] = useState('');
 
     useEffect(() => {
-        getNote(nId, false);
-        getDiscussion({ _id: nId, offset: 0 }, 0);
-        setUpdated(new Date(Date.now()).toISOString())
+        async function fetch() {
+            await getNote(nId, false);
+            await getDiscussion({ _id: nId, offset: 0 }, 0);
+            setUpdated(new Date(Date.now()).toISOString())
+        }
+        fetch();
     }, [getNote, nId, getDiscussion]);
 
-    const udpateDiscussion = () => {
-        getDiscussion({ _id: nId, offset: Math.floor(offset / 12) }, 1);
+    const udpateDiscussion = async () => {
+        await getDiscussion({ _id: nId, offset: Math.floor(offset / 12) }, 1);
         setOF(offset + 12);
     };
 
-    const updateChat = () => {
-        getDiscussion({ _id: nId, offset: 0 }, 2);
+    const updateChat = async () => {
+        await getDiscussion({ _id: nId, offset: 0 }, 2);
         setUpdated(new Date(Date.now()).toISOString())
     };
 
     return <Container profile={profile} isErr={isErr} isSuc={isSuc && note} eT={'Note Not Found'} num={16}>
         <Details discussion={discussion} Note={note} count={count} offset={offset} setOF={udpateDiscussion} updated={updated}
-            updateChat={updateChat} org={id} profile={profile && profile.user} _id={_id} Rec={rec ? rec : ''} tabNav={tabNav} setTN={setTN} />
+            updateChat={updateChat} org={id} profile={profile && profile.user} _id={_id} Rec={rec ? rec : ''} tabNav={tabNav}
+            setTN={setTN} disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled} />
     </Container>
 }
 
@@ -40,6 +44,6 @@ const mapStateToProps = state => {
         discussion: state.Discussion.list,
         count: state.Discussion.count
     }
-}
+};
 
 export default connect(mapStateToProps, { getNote, getDiscussion })(NotePage);

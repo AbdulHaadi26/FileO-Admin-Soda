@@ -15,27 +15,31 @@ const ListPage = ({ profile, fetchFile, fetchTasks, isL, isLS, isLC, isLT, fetch
         [limitT, setLT] = useState(0), [limitMultT, setLMT] = useState(12);
 
     useEffect(() => {
-        setTN(Number(num));
-        let data;
-        switch (Number(num)) {
-            case 1:
-                data = { _id: _id, type: 'All', search: 'file' };
-                fetchFile(data);
-                break;
-            case 2:
-                data = { limit: 0, _id: _id, search: 'note' };
-                fetchNote(data);
-                break;
-            case 3:
-                data = { _id: _id, limit: 0, status: 'All', type: 'Name', due: 'Due' };
-                fetchTasks(data);
-                break;
-            default:
-                data = { _id: _id, search: 'category' };
-                fetchCats(data);
-                break;
+        async function fetch() {
+            setTN(Number(num));
+            let data;
+            switch (Number(num)) {
+                case 1:
+                    data = { _id: _id, type: 'All', search: 'file' };
+                    await fetchFile(data);
+                    break;
+                case 2:
+                    data = { limit: 0, _id: _id, search: 'note' };
+                    await fetchNote(data);
+                    break;
+                case 3:
+                    data = { _id: _id, limit: 0, status: 'All', type: 'Name', due: 'Due' };
+                    await fetchTasks(data);
+                    break;
+                default:
+                    data = { _id: _id, search: 'category' };
+                    await fetchCats(data);
+                    break;
+            }
+            setStarted(1);
         }
-        setStarted(1);
+
+        fetch();
     }, [fetchFile, _id, setStarted, fetchNote, fetchCats, fetchTasks, num]);
 
     const onhandleOPT2 = opt => setOPT2(opt);
@@ -48,12 +52,14 @@ const ListPage = ({ profile, fetchFile, fetchTasks, isL, isLS, isLC, isLT, fetch
     const onhandleOPT1 = opt => setOPT1(opt);
     const onhandleS3 = s => setS3(s);
 
-    return <Container profile={profile} num={15} isSuc={!isL && !isLS && !isLC && !isLT && started > 0}> <List id={id} _id={_id} opt2={opt2} handleOPT2={onhandleOPT2} opt1={opt1} handleOPT1={onhandleOPT1}
-        string={string} limit2={limit2} limitMult2={limitMult2} opt3={opt3} string2={string2} handleL2={onhandleL2} handleLM2={onhandleLM2} handleS2={onhandleS2} handleS={onhandleS} handleOPT3={onhandleOPT3}
-        string3={string3} handleS3={onhandleS3} type={type} handleT={onhandleT} tabNav={tabNav} setTN={setTN} isList={isList} handleISL={setISL}
-        handleTT={setTypeT} handleTypeT={setTypeT} handleStatus={setSet} status={status} typeT={typeT} limitT={limitT}
-        handleST={setST} stringT={stringT} due={due} handleDue={setDue} limitMultT={limitMultT} handleLT={setLT} handleLMT={setLMT}
-    /> </Container>
+    return <Container profile={profile} num={15} isSuc={!isL && !isLS && !isLC && !isLT && started > 0}>
+        <List id={id} _id={_id} opt2={opt2} handleOPT2={onhandleOPT2} opt1={opt1} handleOPT1={onhandleOPT1}
+            string={string} limit2={limit2} limitMult2={limitMult2} opt3={opt3} string2={string2} handleL2={onhandleL2} handleLM2={onhandleLM2} handleS2={onhandleS2} handleS={onhandleS} handleOPT3={onhandleOPT3}
+            string3={string3} handleS3={onhandleS3} type={type} handleT={onhandleT} tabNav={tabNav} setTN={setTN} isList={isList} handleISL={setISL}
+            handleTT={setTypeT} handleTypeT={setTypeT} handleStatus={setSet} status={status} typeT={typeT} limitT={limitT}
+            handleST={setST} stringT={stringT} due={due} handleDue={setDue} limitMultT={limitMultT} handleLT={setLT} handleLMT={setLMT}
+            disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled}
+        /> </Container>
 }
 
 const mapStateToProps = state => {

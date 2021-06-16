@@ -1,10 +1,19 @@
 import React, { lazy, Suspense, useState } from 'react';
 import './style.css';
 import Tabnav from '../tabnav';
+import GInformation from '../../assets/tabnav/G-information.svg';
+import BInformation from '../../assets/tabnav/B-information.svg';
+import GAInfo from '../../assets/tabnav/G-additional Info.svg';
+import BAInfo from '../../assets/tabnav/B-additional info.svg';
 const PImage = lazy(() => import('../edits/editImage'));
 const PText = lazy(() => import('../edits/editText'));
 const PTextArea = lazy(() => import('../edits/editTextArea'));
 const PPassword = lazy(() => import('../edits/editPasswordSingle'));
+
+let icons = [
+    { G: GInformation, B: BInformation },
+    { G: GAInfo , B: BAInfo }
+];
 
 export default ({ User, setting, tabNav, setTN }) => {
     const { _id, name, email, contact, image, current_employer, address, dob, cnic } = User;
@@ -14,7 +23,7 @@ export default ({ User, setting, tabNav, setTN }) => {
 
     return <div className="col-11 u-p-w p-0">
         <h4 className="h">Personal details</h4>
-        <Tabnav items={['Basic', 'Additional']} i={tabNav} setI={setTN} />
+        <Tabnav items={['Basic', 'Additional']} i={tabNav} icons={icons} setI={setTN} />
         {tabNav === 0 && <>
             <Suspense fallback={<></>}><PImage name={'image'} head={'Photo'} modal={num === 1 ? true : false} num={1} handleModal={onhandleModal} val={image} refAct={'profile'} id={_id} imgSize={setting && setting.maxImageSize ? setting.maxImageSize : 1} org={org} /> </Suspense>
             <Suspense fallback={<></>}>

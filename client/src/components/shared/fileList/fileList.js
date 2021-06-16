@@ -32,7 +32,9 @@ const List = ({ id, list, ord, sv, handleSel, sL, isList, downloadFile }) => {
 
         switch (ord) {
             case 1: tempL = tempL.sort(function (a, b) {
-                return new Date(a.date) - new Date(b.date);
+                if(a.last_updated && b.last_updated) {
+                    return new Date(a.last_updated) - new Date(b.last_updated); 
+                } else return new Date(a.date) - new Date(b.date);
             });; break;
             case 2: tempL = tempL.sort(function Sort(a, b) {
                 var textA = a.name.toLowerCase();
@@ -45,7 +47,9 @@ const List = ({ id, list, ord, sv, handleSel, sL, isList, downloadFile }) => {
                 return (textA > textB) ? -1 : (textA > textB) ? 1 : 0;
             }); break;
             default: tempL = tempL.sort(function (a, b) {
-                return new Date(b.date) - new Date(a.date);
+                if(a.last_updated && b.last_updated) {
+                    return new Date(b.last_updated) - new Date(a.last_updated); 
+                } else return new Date(b.date) - new Date(a.date);
             }); break;
         }
         setLT(tempL);
@@ -83,7 +87,7 @@ const List = ({ id, list, ord, sv, handleSel, sL, isList, downloadFile }) => {
             </div>
             <img src={returnType(File.type)} alt="company" style={{ cursor: 'pointer' }} onClick={e => history.push(`/organization/${id}/sharedby/${File.postedby}/file/${File._id}`)} />
             <Link style={{ textDecoration: 'none', wordBreak: 'break-all' }} to={`/organization/${id}/sharedby/${File.postedby}/file/${File._id}`} className="f-n">{File.name.length > 35 ? `${File.name.substr(0, 35)}...` : File.name}</Link>
-            {File.last_updated && <h6 style={{ left: '12px', fontSize: '11px', marginTop:'6px' }}>Last Updated at {renderDate(File.last_updated)}</h6>}
+            {File.last_updated && <h6 style={{ left: '12px', fontSize: '11px', marginTop:'6px', textAlign:'center', color:'grey' }}>Last Updated at {renderDate(File.last_updated)}</h6>}
             {sv && File.isChecked !== undefined && <div className="form-check form-check-inline" style={{ marginTop: '12px' }} >
                 <input className="form-check-input" type="checkbox" defaultChecked={File.isChecked} value={File.isChecked} onChange={e => handleSel(File)} />
             </div>}

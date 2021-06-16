@@ -31,3 +31,8 @@
   border: 1px solid #58B19F;
   font-weight: 400;
 }
+
+.z-ult {
+  left: -100% !important;
+  margin-left: -200px !important;
+}

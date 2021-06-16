@@ -3,12 +3,12 @@ import Link from 'react-router-dom/Link';
 import returnType from '../../types';
 import history from '../../../utils/history';
 import More from '../../../assets/more.svg';
-import { downloadFile} from '../../../redux/actions/noteActions';
+import { downloadFile } from '../../../redux/actions/noteActions';
 import { connect } from 'react-redux';
 const bS = { borderBottom: 'solid 1px #dcdde1' };
 const pF = { position: 'fixed', zIndex: '9998', minHeight: '100vh', backgroundColor: '#000', top: '0', left: '0', opacity: '0.0', minWidth: '100vw' };
 
-const List = ({ id, list, ord, isList, downloadFile }) => {
+const List = ({ id, list, ord, isList, downloadFile, setDI }) => {
     const [listT, setLT] = useState([]), [active, setAct] = useState(-1);
 
     useEffect(() => {
@@ -37,14 +37,15 @@ const List = ({ id, list, ord, isList, downloadFile }) => {
     }, [list, ord]);
 
     return listT.map((File, k) => isList ? <div className="LI" key={File._id} style={{ padding: '12px 6px', margin: '0px', borderRadius: '4px', position: 'relative' }}>
-        <img src={returnType(File.type)} alt="file" style={{ width: '36px', height: '36px' }} />
-        <Link style={{ textDecoration: 'none', marginLeft: '12px', wordBreak: 'break-all' }} className="mr-auto" to={`/organization/${id}/note/view/${File._id}`}>{File.name}</Link>
+        <img src={returnType(File.type)} alt="File" style={{ width: '36px', height: '36px' }} />
+        <Link style={{ textDecoration: 'none', marginLeft: '12px', wordBreak: 'break-all', fontSize: '12px' }} className="mr-auto" to={`/organization/${id}/note/view/${File._id}`}>{File.name}</Link>
         {active === k && active >= 0 && <div style={pF} onClick={e => setAct(-1)} />}
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
             <h6 className="item-hover" style={{ position: 'relative', width: 'fit-content' }} onClick={e => setAct(active === k ? -1 : k)}>
                 <div style={{ width: '14px', height: '14px', cursor: 'pointer', backgroundImage: `url('${More}')` }} />
                 <div className="dropdown-content" style={{ display: `${active === k ? 'flex' : 'none'}`, top: '12px' }}>
                     <h6 className='s-l' style={bS} onClick={e => { setAct(-1); downloadFile(File._id); }}>Download File</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setDI(File._id); }}>Delete File</h6>
                 </div>
             </h6>
         </div>
@@ -55,11 +56,12 @@ const List = ({ id, list, ord, isList, downloadFile }) => {
                     <div style={{ width: '14px', height: '14px', cursor: 'pointer', backgroundImage: `url('${More}')` }} />
                     <div className="dropdown-content" style={{ display: `${active === k ? 'flex' : 'none'}`, top: '12px' }}>
                         <h6 className='s-l' style={bS} onClick={e => { setAct(-1); downloadFile(File._id); }}>Download File</h6>
+                        <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setDI(File._id); }}>Delete File</h6>
                     </div>
                 </h6>
             </div>
-            <img src={returnType(File.type)} alt="compnay" style={{ cursor: 'pointer' }} onClick={e => history.push(`/organization/${id}/note/view/${File._id}`)} />
-            <Link style={{ textDecoration: 'none', wordBreak: 'break-all' }} to={`/organization/${id}/note/view/${File._id}`} className="f-n">{File.name.length > 35 ? `${File.name.substr(0, 35)}...` : File.name}</Link>
+            <img src={returnType(File.type)} alt="File" style={{ cursor: 'pointer' }} onClick={e => history.push(`/organization/${id}/note/view/${File._id}`)} />
+            <Link style={{ textDecoration: 'none', wordBreak: 'break-all', fontSize: '14px' }} to={`/organization/${id}/note/view/${File._id}`} className="f-n">{File.name.length > 35 ? `${File.name.substr(0, 35)}...` : File.name}</Link>
         </div>);
 
 }

@@ -9,18 +9,21 @@ const ViewPage = ({ match, getNote, profile, isErr, isSuc, note, rec, discussion
     const { id, _id, nId } = match.params, [tabNav, setTN] = useState(0), [offset, setOF] = useState(12), [updated, setUpdated] = useState('');
 
     useEffect(() => {
-        getNote(nId, true);
-        getDiscussion({ _id: nId, offset: 0 }, 0);
-        setUpdated(new Date(Date.now()).toISOString())
+        async function fetch() {
+            await getNote(nId, true);
+            await getDiscussion({ _id: nId, offset: 0 }, 0);
+            setUpdated(new Date(Date.now()).toISOString())
+        }
+        fetch();
     }, [getNote, nId, getDiscussion]);
 
-    const udpateDiscussion = () => {
-        getDiscussion({ _id: nId, offset: Math.floor(offset / 12) }, 1);
+    const udpateDiscussion = async () => {
+        await getDiscussion({ _id: nId, offset: Math.floor(offset / 12) }, 1);
         setOF(offset + 12);
     };
 
-    const updateChat = () => {
-        getDiscussion({ _id: nId, offset: 0 }, 2);
+    const updateChat = async () => {
+        await getDiscussion({ _id: nId, offset: 0 }, 2);
         setUpdated(new Date(Date.now()).toISOString())
     };
 

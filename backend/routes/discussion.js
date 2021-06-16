@@ -9,23 +9,55 @@ const {
 } = require('../middlewares/oracleDB');
 
 const {
-    getDiscussion, createDiscussion, discussionCount
+    getDiscussion,
+    createDiscussion,
+    discussionCount
 } = require('../schemas/discussion');
-const { updateNoteUpt } = require('../schemas/note');
-const { createNotification } = require('../schemas/notification');
-const { getUserByRoles } = require('../schemas/projectAssigned');
-const { getFileId } = require('../schemas/projectFile');
-const { getCRole } = require('../schemas/projectRoles');
-const { getProjectById } = require('../schemas/projects');
-const { updateCatUptS } = require('../schemas/sharedCat');
-const { updateFileUptS } = require('../schemas/sharedFile');
-const { updateNoteUptS } = require('../schemas/sharedNote');
+
+const {
+    updateNoteUpt
+} = require('../schemas/note');
+
+const {
+    createNotification
+} = require('../schemas/notification');
+
+const {
+    getCatById
+} = require('../schemas/projectCategory');
+
+const {
+    getFileId
+} = require('../schemas/projectFile');
+
+const {
+    getProjectById
+} = require('../schemas/projects');
+
+const {
+    updateCatUptS,
+    updateCatUptSParent
+} = require('../schemas/sharedCat');
+
+const {
+    updateFileUptS
+} = require('../schemas/sharedFile');
+
+const {
+    updateNoteUptS
+} = require('../schemas/sharedNote');
 
 const {
     findUserById
 } = require('../schemas/user');
-const { updateCatUpt } = require('../schemas/userCategory');
-const { updateValue } = require('../schemas/userFile');
+
+const {
+    updateCatUpt
+} = require('../schemas/userCategory');
+
+const {
+    updateValue
+} = require('../schemas/userFile');
 
 
 router.get('/getDiscussion/:_id', JWT, async (req, res) => {
@@ -36,13 +68,13 @@ router.get('/getDiscussion/:_id', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionDiscussion, collectionUser] = [
-            await soda.createCollection('discussion'), await soda.createCollection('users')
-        ];
+        const collectionDiscussion = await soda.createCollection('discussion');
+        const collectionUser = await soda.createCollection('users');
 
         const { _id } = req.params;
 
-        let [messages, count] = [await getDiscussion(_id, req.query.offset, collectionDiscussion, collectionUser), await discussionCount(_id, collectionDiscussion)];
+        let messages = await getDiscussion(_id, req.query.offset, collectionDiscussion, collectionUser);
+        let count = await discussionCount(_id, collectionDiscussion);
 
         res.json({ messages, count });
     } catch (e) {
@@ -61,11 +93,11 @@ router.put('/register', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionDiscussion, collectionUser] = [
-            await soda.createCollection('discussion'), await soda.createCollection('users')
-        ];
 
-        const { _id, message, isEdt, isFile, category, isP, isPM } = req.body;
+        const collectionDiscussion = await soda.createCollection('discussion');
+        const collectionUser = await soda.createCollection('users');
+
+        const { _id, message, isEdt, isFile, category, isP, isPM, project } = req.body;
 
         let data = {
             id: _id,
@@ -75,41 +107,46 @@ router.put('/register', JWT, async (req, res) => {
             message
         }
 
-        if (!isFile && !isP) {
-            let [collectionNotes, collectionSharedN] = [await soda.createCollection('notes'), await soda.createCollection('shrs_note')]
-            if (isEdt) await updateNoteUpt(_id, true, collectionNotes);
-            else await updateNoteUptS(_id, true, collectionSharedN);
-        } else if (isFile && !isP) {
-            let [collectionFiles, collectionShared, collectionCat, collectionSharedC] = [
-                await soda.createCollection('user_files'), await soda.createCollection('shrs'),
-                await soda.createCollection('user_cats'), await soda.createCollection('shrs_cat')
-            ];
+        if (!project)
+            if (!isFile && !isP) {
+                let collectionNotes = await soda.createCollection('notes');
+                let collectionSharedN = await soda.createCollection('shrs_note');
+                if (isEdt) await updateNoteUpt(_id, true, collectionNotes);
+                else await updateNoteUptS(_id, true, req.token._id, collectionSharedN);
+            } else if (isFile && !isP) {
 
-            if (isEdt) {
-                await updateValue(_id, 'update', true, collectionFiles);
-                category && updateCatUpt(category, true, collectionCat);
-            }
-            else {
-                await updateFileUptS(_id, true, collectionShared);
-                category && await updateCatUptS(category, true, collectionSharedC);
-            }
-        } else {
-            let [collectionNotifs, collectionRoles, collectionAss, collectionProjs, collectionFiles] = [
-                await soda.createCollection('notifs'), await soda.createCollection('proj_roles'), await soda.createCollection('proj_assigned'),
-                await soda.createCollection('projs'), await soda.createCollection('proj_files')
-            ];
+                let collectionFiles = await soda.createCollection('user_files');
+                let collectionShared = await soda.createCollection('shrs');
+                let collectionCat = await soda.createCollection('user_cats');
+                let collectionSharedC = await soda.createCollection('shrs_cat');
 
-            let file = await getFileId(_id, collectionFiles);
+                if (isEdt) {
+                    await updateValue(_id, 'update', true, collectionFiles);
+                    category && updateCatUpt(category, true, collectionCat);
+                }
+                else {
+                    await updateValue(_id, 'last_updated', true, collectionFiles);
+                    await updateFileUptS(_id, true, collectionShared);
+                    category && await updateCatUptSParent(category, collectionCat, collectionSharedC);
+                    category && await updateCatUptS(category, true, collectionSharedC);
+                }
+            } else {
+                let collectionFiles = await soda.createCollection('proj_files');
+                let collectionProjs = await soda.createCollection('projs');
+                let collectionCat = await soda.createCollection('proj_cats');
+                let collectionNotifs = await soda.createCollection('notifs');
 
-            if (file) {
-                let project = await getProjectById(file.pId, collectionProjs);
-                if (project) {
-                    let date = parseDate();
-                    let title = `${isPM ? 'Project Manager' : 'Participant'} has commented on a ${file.name}.`, msg = `A new comment has been added to ${file.name} by the ${isPM ? 'Project Manager' : 'Participant'} ${date} in project ${project.name}.`;
-                    await generateNotification(req.token.org, file.category, req.token._id, title, msg, 1, isPM ? 1 : 2, _id, project, isPM, date, file.type, file.pId, collectionNotifs, collectionRoles, collectionAss);
+                let file = await getFileId(_id, collectionFiles);
+
+                if (file) {
+                    let project = await getProjectById(file.pId, collectionProjs);
+                    if (project) {
+                        let date = parseDate();
+                        let title = `${isPM ? 'Project Manager' : 'Participant'} has commented on a ${file.name}.`, msg = `A new comment has been added to ${file.name} by the ${isPM ? 'Project Manager' : 'Participant'} ${date} in project ${project.name}.`;
+                        await generateNotification(req.token.org, file.category, req.token._id, title, msg, 1, isPM ? 1 : 2, _id, project, isPM, date, file.type, file.pId, collectionNotifs, collectionCat);
+                    }
                 }
             }
-        }
 
         let key = await createDiscussion(data, collectionDiscussion);
 
@@ -126,12 +163,10 @@ router.put('/register', JWT, async (req, res) => {
     }
 });
 
-async function generateNotification(org, cat, pBy, title, message, t, uT, fileId, project, PM, dt, mime, pId, collectionNotifs, collectionRoles, collectionAss) {
-    var users = await getCRole(org, cat, collectionRoles);
-    if (!users) users = [];
-    var userIds = await getUserByRoles(org, users, collectionAss);
-    if (!PM) userIds.push(project.managerId);
-    userIds && userIds.length > 0 && await Promise.all(userIds.map(async id => {
+async function generateNotification(org, cat, pBy, title, message, t, uT, fileId, project, PM, dt, mime, pId, collectionNotifs, collectionCat) {
+    let category = await getCatById(cat, collectionCat);
+
+    category && category.ids && category.ids.length > 0 && await Promise.all(category.ids.map(async id => {
         var data = {
             postedBy: pBy, title: title, message: message,
             recievedBy: id, type: t, userType: uT, org: org,

@@ -2,9 +2,18 @@ import React, { lazy, Suspense, Fragment, useState } from 'react';
 import Link from 'react-router-dom/Link';
 import returnType from '../../types';
 import User from '../../../assets/static/user.png';
+import Folder from '../../../assets/folder.svg';
 import '../style.css';
 import Tabnav from '../../tabnav';
+import GNotif from '../../../assets/tabnav/G-notifications.svg';
+import BNotif from '../../../assets/tabnav/B-notification.svg';
 const ModalDelete = lazy(() => import('../modeDel'));
+
+let icons = [
+    { G: GNotif, B: BNotif }
+];
+
+
 export default ({ Notification, id, org, tabNav, setTN }) => {
     const [modalDel, setMD] = useState(false);
 
@@ -17,6 +26,8 @@ export default ({ Notification, id, org, tabNav, setTN }) => {
         else if (t === 4) return `/organization/${org}/myspace/user/${Notification.recievedBy}/notes/view/${Notification.id}`;
         else if (t === 5) return `/organization/${org}/sharedby/${Notification.postedBy._id}/category/${Notification.id}/list`;
         else if (t === 8) return `/organization/${org}/user/${Notification.postedBy._id}/clients/file/${Notification.id}`;
+        else if (t === 10 && ut === 2) return `/organization/${org}/projects/${Notification.pId}/files/${Notification.id}/list`;
+        else if (t === 10 && ut === 1) return `/organization/${org}/files/${Notification.id}/list`;
         return '';
     };
 
@@ -37,7 +48,7 @@ export default ({ Notification, id, org, tabNav, setTN }) => {
 
     return <div className="col-11 not-w p-0">
         <h4 className="h">Notification</h4>
-        <Tabnav items={['Details']} i={tabNav} setI={setTN} />
+        <Tabnav items={['Details']} i={tabNav} setI={setTN} icons={icons} />
         <div className="col-12 not-f-w">
             <div className="delNot">
                 <div className="faD trash" onClick={e => setMD(true)} />
@@ -49,8 +60,9 @@ export default ({ Notification, id, org, tabNav, setTN }) => {
             </div>
             <h6 className="not-h">{Notification.title}</h6>
             <h6 className="not-p2">{Notification.message}</h6>
-            {Notification.mimeType && returnType(Notification.mimeType) && <img className="file-img" src={returnType(Notification.mimeType)} alt="file logo" />}
-            {Notification.id && renderUrl(Notification.type, Notification.userType) && <Link className="file-link" to={`${renderUrl(Notification.type, Notification.userType)}`}>Click here to view {Notification.type === 5 ? 'folder' : Notification.type === 4 ? 'note' : 'file'}</Link>}
+            {Notification.mimeType && Notification.type !== 4 && Notification.type !== 5 && Notification.type !== 10 && <img className="file-img" src={returnType(Notification.mimeType)} alt="File Logo" />}
+            {(Notification.type === 5 || Notification.type) === 10 && <img className="file-img" src={Folder} alt="Folder Logo" />}
+            {Notification.id && renderUrl(Notification.type, Notification.userType) && <Link className="file-link" to={`${renderUrl(Notification.type, Notification.userType)}`}>Click here to view {Notification.type === 5 || Notification.type === 10 ? 'folder' : Notification.type === 4 ? 'note' : 'file'}</Link>}
         </div>
         {modalDel && <Suspense fallback={<Fragment />}> <ModalDelete org={org} id={id} onhandleModalDel={handleModalDel} /> </Suspense>}
     </div>

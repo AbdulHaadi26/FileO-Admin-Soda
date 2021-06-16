@@ -7,4 +7,4 @@ export default ({ match }) => {
             <PasswordReset token={match.params.token} />
         </div>
     </div>
-}
+};

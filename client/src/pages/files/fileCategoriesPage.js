@@ -8,54 +8,34 @@ const AdminList = lazy(() => import('../../components/files/adminCatList'));
 
 const ListPage = ({ match, profile, fetchCombinedCP, isL, isLS, isUpt, per, clearUpload }) => {
     const { id } = match.params;
-    const [started, setStarted] = useState(0), [string, setS] = useState(''), [categories, setCATS] = useState([]), [tabNav, setTN] = useState(0), [isList, setISL] = useState(false);
+    const [started, setStarted] = useState(0), [string, setS] = useState(''), [tabNav, setTN] = useState(0), [isList, setISL] = useState(false);
 
     useEffect(() => {
-        let catId = [], cats = [], data;
-        if (profile && profile.user) {
-            if (profile.user.userType === 2) {
-                data = { _id: id };
-                fetchCombinedCP(data);
-                setStarted(1);
-            } else {
-                profile.user.roles && profile.user.roles.length > 0 && profile.user.roles.map(r => r.category && r.category.length > 0 && r.category.map(c => {
-                    if (!catId.includes(c._id)) {
-                        catId.push(c._id);
-                        return cats.push(c);
-                    } else return c;
-                }));
-                setCATS(cats);
-                setStarted(1);
+        async function fetch() {
+            if (profile && profile.user) {
+                let data = { auth: profile.user.userType === 2 };
+                await fetchCombinedCP(data);
             }
+            setStarted(1);
         }
-    }, [profile, fetchCombinedCP, id, setStarted]);
+        fetch();
+    }, [fetchCombinedCP, profile, setStarted]);
 
     const getList = () => {
-        let catId = [], cats = [], data;
         clearUpload();
         if (profile && profile.user) {
-            if (profile.user.userType === 2) {
-                data = { _id: id };
-                fetchCombinedCP(data);
-            } else {
-                profile.user.roles && profile.user.roles.length > 0 && profile.user.roles.map(r => r.category && r.category.length > 0 && r.category.map(c => {
-                    if (!catId.includes(c._id)) {
-                        catId.push(c._id);
-                        return cats.push(c);
-                    } else return c;
-                }));
-                setCATS(cats);
-            }
+            let data = { auth: profile.user.userType === 2 };
+            fetchCombinedCP(data);
         }
     }
 
     const onhandleS = s => setS(s);
 
     return <Container profile={profile} isSuc={!isL && !isLS && started > 0} num={9} isUpt={isUpt} percent={per} onSubmit={getList}> {profile.user.userType !== 2 ?
-        <UserList id={id} tabNav={tabNav} category={categories} orgName={profile.user.orgName} string={string}
+        <UserList id={id} tabNav={tabNav} auth={false} orgName={profile.user.orgName} string={string}
             handleS={onhandleS} setTN={setTN} isList={isList} handleISL={setISL} getList={getList} />
-        : <AdminList id={id} orgName={profile.user.orgName} tabNav={tabNav} string={string} handleS={onhandleS}
-            setTN={setTN} isList={isList} handleISL={setISL} getList={getList} />} </Container>
+        : <AdminList id={id} auth={true} orgName={profile.user.orgName} tabNav={tabNav} string={string} handleS={onhandleS}
+            setTN={setTN} isList={isList} handleISL={setISL} getList={getList} disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled}  />} </Container>
 }
 
 const mapStateToProps = state => {

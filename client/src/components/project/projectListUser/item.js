@@ -6,7 +6,7 @@ import Airline from '../../../assets/project-icons/airline.svg';
 import Badge from '../../../assets/project-icons/badge.svg';
 import Bank from '../../../assets/project-icons/bank.svg';
 import Book from '../../../assets/project-icons/book.svg';
-import Chip from '../../../assets/project-icons/airline.svg';
+import Chip from '../../../assets/project-icons/chip.svg';
 import Factory from '../../../assets/project-icons/factory.svg';
 import Finance from '../../../assets/project-icons/finance.svg';
 import Government from '../../../assets/project-icons/government.svg';
@@ -27,7 +27,7 @@ let listI = [
     { img: Sales, text: 'Sales' }, { img: Sports, text: 'Sports' }
 ];
 
-const dF = { display: 'flex', flexDirection: 'row', marginTop: '20px', width: '100%', flexWrap: 'wrap' };
+const dF = { display: 'flex', flexDirection: 'row', marginTop: '12px', width: '100%', flexWrap: 'wrap' };
 
 export default ({ list, count, ord, onFetch, isList }) => {
 
@@ -49,12 +49,14 @@ export default ({ list, count, ord, onFetch, isList }) => {
     }
 
     const renderList = () => listT.map((Item, k) => isList ? <div className="LI" key={Item._id}>
-        {Item.projId && <Link className="mr-auto" to={`/organization/${Item.org}/projects/${Item.projId._id}/categories/list`}>{Item.projId ? Item.projId.name : ''}</Link>}
+        <img src={listI[Item.projId.icon ? Item.projId.icon : 0].img} alt={listI[Item.projId.icon ? Item.projId.icon : 0].text} style={{ cursor: 'pointer', width: '30px', height: '30px' }}
+            onClick={e => history.push(`/organization/${Item.org}/projects/${Item.projId._id}/categories/list/page/0`)} />
+        {Item.projId && <Link style={{ marginLeft: '12px' }} className="mr-auto" to={`/organization/${Item.org}/projects/${Item.projId._id}/categories/list/page/0`}>{Item.projId ? Item.projId.name : ''}</Link>}
     </div> : <div className="col-lg-2 col-4 mFWS" key={k}>
-        <img src={listI[Item.icon ? Item.icon : 0].img} alt={listI[Item.icon ? Item.icon : 0].text} style={{ cursor: 'pointer' }}
-            onClick={e => history.push(`/organization/${Item.org}/projects/${Item.projId._id}/categories/list`)} />
-        <Link style={{ textDecoration: 'none', wordBreak: 'break-all', fontSize: '14px', fontWeight: '400', marginTop:'12px', marginLeft: 'auto', marginRight: 'auto' }} to={`/organization/${Item.org}/projects/${Item.projId._id}/categories/list`}>{Item.projId ? Item.projId.name : ''}</Link>
-    </div>);
+            <img src={listI[Item.projId.icon ? Item.projId.icon : 0].img} alt={listI[Item.projId.icon ? Item.projId.icon : 0].text} style={{ cursor: 'pointer' }}
+                onClick={e => history.push(`/organization/${Item.org}/projects/${Item.projId._id}/categories/list/page/0`)} />
+            <Link style={{ textDecoration: 'none', wordBreak: 'break-all', fontSize: '14px', fontWeight: '400', marginTop: '12px', marginLeft: 'auto', marginRight: 'auto' }} to={`/organization/${Item.org}/projects/${Item.projId._id}/categories/list/page/0`}>{Item.projId ? Item.projId.name : ''}</Link>
+        </div>);
 
     return <>
         <div className="col-12 p-0" style={dF}>{renderList(list)}</div>

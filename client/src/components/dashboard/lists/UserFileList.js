@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'react-router-dom/Link';
+import history from '../../../utils/history';
 import returnType from '../../types';
 import './style.css';
 const eS = { textAlign: 'center', width: '100%', marginTop: '12px' };
@@ -39,7 +40,7 @@ export default ({ fileList }) => {
         }
     }
 
-    return list && list.length > 0 ? list.map(Item => <div className="LI" key={Item._id} style={{ padding: '4px 6px', borderRadius: '4px', position: 'relative' }}>
+    return list && list.length > 0 ? list.map(Item => <div className="LIn" onClick={e => history.push(renderUrl(Item))} key={Item._id} style={{ padding: '4px 6px', borderRadius: '4px', position: 'relative', cursor:'pointer' }}>
         <div className="col-lg-5 col-12" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             <img src={returnType(Item.type)} alt="file" style={{ width: '36px', height: '36px' }} />
             <div className="d-d-w" style={{ marginLeft: '12px' }}>

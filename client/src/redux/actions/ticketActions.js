@@ -1,12 +1,12 @@
-import { ticketConstants, userConstants, fileConstants } from "../constants";
+import { ticketConstants, fileConstants } from "../constants";
 import api from '../../utils/api';
 import history from '../../utils/history';
 import Token from './token';
 import axios from 'axios';
 import { ModalProcess } from "./profileActions";
+import { logOut } from "./userActions";
 const { TClr, TErr, TReq, TSuc, TLSuc, TGSuc } = ticketConstants;
 const { FUpt, FClr, FSuc } = fileConstants;
-const { GPErr } = userConstants;
 
 export const registerTicketImage = (data, file) => async dispatch => {
     try {
@@ -21,7 +21,10 @@ export const registerTicketImage = (data, file) => async dispatch => {
             history.push(`/organization/${data.org}/upload/limit`);
         }
         else dispatch({ type: TErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const uploadFile = (file, url, ticket) => async dispatch => {
@@ -36,7 +39,10 @@ export const uploadFile = (file, url, ticket) => async dispatch => {
                 dispatch({ type: FUpt, payload: percentCheck, payloadExtra: fData });
             }
         });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const clearFile = org => dispatch => {
@@ -48,7 +54,7 @@ export const clearFile = org => dispatch => {
 export const clear = () => dispatch => {
     dispatch({ type: FClr });
     dispatch({ type: FSuc });
-}
+};
 
 export const registerTicket = (data, org) => async dispatch => {
     try {
@@ -57,7 +63,10 @@ export const registerTicket = (data, org) => async dispatch => {
         var res = await api.put("/ticket/register", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         if (res.data.ticket && !res.data.error) history.push(`/organization/${org}/support`);
         else dispatch({ type: TErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const clearTicket = () => async dispatch => dispatch({ type: TClr });
@@ -78,7 +87,10 @@ export const fetchTicket = data => async dispatch => {
             dispatch({ type: TSuc });
         }
         else dispatch({ type: TErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchTicketSearch = data => async dispatch => {
@@ -95,7 +107,10 @@ export const fetchTicketSearch = data => async dispatch => {
             dispatch({ type: TSuc });
         }
         else dispatch({ type: TErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const getTicket = _id => async dispatch => {
@@ -107,7 +122,10 @@ export const getTicket = _id => async dispatch => {
             dispatch({ type: TGSuc, payload: res.data.ticket });
             dispatch({ type: TSuc });
         } else dispatch({ type: TErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const updateTicket = data => async dispatch => {
@@ -120,7 +138,10 @@ export const updateTicket = data => async dispatch => {
             dispatch({ type: TSuc });
             dispatch(ModalProcess({ title: 'Ticket', text: 'Ticket details has been updated.' }));
         } else dispatch({ type: TErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const deleteTicket = (_id, org) => async dispatch => {
@@ -130,7 +151,10 @@ export const deleteTicket = (_id, org) => async dispatch => {
         await api.post(`/ticket/deleteTicket/${_id}`, '', { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         dispatch(ModalProcess({ title: 'Ticket', text: 'Ticket details has been deleted.' }));
         history.push(`/organization/${org}/support`);
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const removeAttachment = data => async dispatch => {
@@ -142,7 +166,10 @@ export const removeAttachment = data => async dispatch => {
             dispatch({ type: TGSuc, payload: res.data.ticket });
             dispatch({ type: TSuc });
         } else dispatch({ type: TErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const updateAttachment = (data, file) => async dispatch => {
@@ -158,5 +185,8 @@ export const updateAttachment = (data, file) => async dispatch => {
             history.push(`/organization/${data.org}/upload/limit`);
         }
         else dispatch({ type: TErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }

@@ -1,0 +1,23 @@
+.message-border {
+    top: 12px;
+    border: #FF0000 1px solid;
+    background-color: #FFE8E8;
+    position: fixed;
+    padding: 6px 2% 0px 2%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    right: auto;
+    left: auto;
+    border-radius: 8px; 
+    left: 50%; 
+    transform: translate(-50%, 0%);
+}
+
+.message-border h6 {
+    font-size: 14px;
+    color: #FF0000;
+    letter-spacing: 1px;
+}

@@ -4,27 +4,28 @@ import { downloadFile, generateUrl } from '../../../redux/actions/userFilesActio
 import Down from '../../../assets/downB.svg';
 import Url from '../../../assets/urlB.svg';
 import history from '../../../utils/history';
+import { clientUrl } from '../../../utils/api';
 const bS = { borderBottom: 'solid 1px #dcdde1' };
 const pF = { position: 'fixed', zIndex: '9998', minHeight: '100vh', backgroundColor: '#000', top: '0', left: '0', opacity: '0.0', minWidth: '100vw' };
 
-const ButtonDown = ({ id, downloadFile, showModal, showEmailModal, mT, org, postedby, generateUrl }) => {
+const ButtonDown = ({ disabled, id, downloadFile, showModal, showEmailModal, mT, org, postedby, generateUrl }) => {
     const [active, setAct] = useState(false);
 
     const shareWithin = () => {
         setAct(false);
         history.push(`/organization/${org}/myspace/user/${postedby}/shared/file/${id}`);
-    }
+    };
 
     const handleModal = () => {
         setAct(false);
-        showModal(true, id);
-    }
+        !disabled && showModal(true, id);
+    };
 
     const handleModalEmail = () => {
         setAct(false);
-        generateUrl(id);
-        showEmailModal(`https://ocidev.file-o.com:4224/shared/file/${id}`);
-    }
+        !disabled && generateUrl(id);
+        !disabled && showEmailModal(`${clientUrl}/shared/file/${id}`);
+    };
 
     return <div style={{ display: 'flex', flexDirection: 'row' }}>
         <h6 className={`order`} style={{ margin: mT }} onClick={e => downloadFile(id)}><div style={{ width: '16px', height: '16px', backgroundImage: `url('${Down}')` }} /></h6>

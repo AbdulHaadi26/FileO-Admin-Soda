@@ -178,8 +178,8 @@ module.exports = {
                         dateL.setHours(0, 0, 0, 0);
                         dateL.setDate(31);
                         dateR.setDate(31);
-                        dateR.setMonth(date.getMonth() + 0);
-                        dateL.setMonth(date.getMonth() + 1);
+                        dateR.setMonth(dateR.getMonth() + 0);
+                        dateL.setMonth(dateL.getMonth() + 1);
                         doc = await collection.find().filter({ sharedWith: _id, isTask: { $eq: value }, time_due: { $lte: dateL, $gte: dateR } }).count();
                     } else {
                         doc = await collection.find().filter({ sharedWith: _id, isTask: { $eq: value }, time_due: { $lt: date } }).count();
@@ -245,10 +245,10 @@ module.exports = {
                         let dateR = new Date(Date.now()), dateL = new Date(Date.now());;
                         dateR.setHours(0, 0, 0, 0);
                         dateL.setHours(0, 0, 0, 0);
-                        dateR.setDate(31);
                         dateL.setDate(31);
-                        dateR.setMonth(date.getMonth() + 0);
-                        dateL.setMonth(date.getMonth() + 1);
+                        dateR.setDate(31);
+                        dateR.setMonth(dateR.getMonth() + 0);
+                        dateL.setMonth(dateL.getMonth() + 1);
                         doc = await collection.find().filter({ $query: { sharedWith: _id, isTask: { $eq: value }, time_due: { $lte: dateL, $gte: dateR } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
                     } else {
                         doc = await collection.find().filter({ $query: { sharedWith: _id, isTask: { $eq: value }, time_due: { $lt: date } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
@@ -287,7 +287,7 @@ module.exports = {
         }
     },
 
-    getAllNoteQueryCount: async (_id, string,  value, type, status, due, collection) => {
+    getAllNoteQueryCount: async (_id, string, value, type, status, due, collection) => {
         try {
             let doc, date = new Date(Date.now());
             date.setHours(0, 0, 0, 0);
@@ -337,8 +337,8 @@ module.exports = {
                         dateL.setHours(0, 0, 0, 0);
                         dateL.setDate(31);
                         dateR.setDate(31);
-                        dateR.setMonth(date.getMonth() + 0);
-                        dateL.setMonth(date.getMonth() + 1);
+                        dateR.setMonth(dateR.getMonth() + 0);
+                        dateL.setMonth(dateL.getMonth() + 1);
                         doc = await collection.find().filter({ sharedWith: _id, isTask: { $eq: value }, time_due: { $lte: dateL, $gte: dateR } }).count();
                     } else {
                         doc = await collection.find().filter({ sharedWith: _id, isTask: { $eq: value }, time_due: { $lt: date } }).count();
@@ -406,10 +406,10 @@ module.exports = {
                         let dateR = new Date(Date.now()), dateL = new Date(Date.now());;
                         dateR.setHours(0, 0, 0, 0);
                         dateL.setHours(0, 0, 0, 0);
-                        dateR.setDate(31);
                         dateL.setDate(31);
-                        dateR.setMonth(date.getMonth() + 0);
-                        dateL.setMonth(date.getMonth() + 1);
+                        dateR.setDate(31);
+                        dateR.setMonth(dateR.getMonth() + 0);
+                        dateL.setMonth(dateL.getMonth() + 1);
                         doc = await collection.find().filter({ $query: { sharedWith: _id, isTask: { $eq: value }, time_due: { $lte: dateL, $gte: dateR } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
                     } else {
                         doc = await collection.find().filter({ $query: { sharedWith: _id, isTask: { $eq: value }, time_due: { $lt: date } }, $orderby: { created: -1 } }).skip(skipInNumber).limit(12).getDocuments();
@@ -471,13 +471,13 @@ module.exports = {
         }
     },
 
-    updateNoteUptS: async (_id, value, collection) => {
+    updateNoteUptS: async (_id, value, postedBy, collection) => {
         try {
             let doc = await collection.find().filter({ noteId: _id }).getDocuments();
             if (doc) {
                 await Promise.all(doc.map(async document => {
                     let note = document.getContent();
-                    note.updated = value;
+                    if (postedBy !== note.postedby) note.updated = value;
                     await collection.find().fetchArraySize(0).key(document.key).replaceOne(note);
                 }))
             }
@@ -503,7 +503,7 @@ module.exports = {
 
     getAllUptNoteCountS: async (_id, value, collection) => {
         try {
-            const doc = await collection.find().filter({ sharedWith: _id, updated: true, isTask: { $ne: value } }).count();
+            const doc = await collection.find().filter({ sharedWith: _id, updated: true, isTask: { $eq: value } }).count();
             if (doc) return doc.count;
             return 0;
         } catch (e) {

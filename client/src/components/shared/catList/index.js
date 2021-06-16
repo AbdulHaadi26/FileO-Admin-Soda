@@ -3,7 +3,7 @@ import Link from 'react-router-dom/Link';
 import Folder from '../../../assets/folder.svg';
 import history from '../../../utils/history';
 
-export default ({ list, ord }) => {
+export default ({ list, ord, catId }) => {
     var listT = [];
     listT = listT.concat(list);
 
@@ -27,9 +27,10 @@ export default ({ list, ord }) => {
     }
 
     const renderList = () => listT.map((Cat, k) => Cat.catId && <div className="mFWS col-lg-2 col-4" key={Cat._id}>
-        <img src={Folder} alt="Folder" style={{ cursor: 'pointer' }} onClick={e => history.push(`/organization/${Cat.org}/sharedby/${Cat.sharedBy}/category/${Cat.catId._id}/list`)} />
+        <img src={Folder} alt="Folder" style={{ cursor: 'pointer' }} onClick={e => history.push(`/organization/${Cat.org}/sharedby/${Cat.sharedBy}/parentCategory/${Cat._id}/category/${Cat.catId._id}/list`)} />
         <Link to={`/organization/${Cat.org}/sharedby/${Cat.sharedBy}/category/${Cat.catId._id}/list`} className="f-n mr-auto" style={{ textDecoration: 'none', textAlign: 'center', wordBreak: 'break-all' }}>{Cat.catTitle}</Link>
-        <h6 style={{ fontSize: '12px', fontWeight: '400', marginTop: '4px', textAlign: 'center' }}>{Cat.sharedByName} {Cat.updated && <span style={{ color: 'red' }}>(Updated)</span>}</h6>
+        <h6 style={{ fontSize: '12px', fontWeight: '400', marginTop: '4px', textAlign: 'center' }}>{Cat.sharedByName}</h6>
+        {Cat.updated && <h6 className="updated">Updated</h6>}
     </div>);
 
     return <div style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>{renderList()}</div>

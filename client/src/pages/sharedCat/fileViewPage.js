@@ -9,26 +9,31 @@ const ViewPage = ({ match, getFileShared, profile, isSuc, file, isErr, getDiscus
     const { _id, id, uId } = match.params, [tabNav, setTN] = useState(0), [offset, setOF] = useState(12), [updated, setUpdated] = useState('');
 
     useEffect(() => {
-        let data = { _id: _id, pId: uId };
-        getFileShared(data);
-        getDiscussion({ _id: _id, offset: 0 }, 0);
-        setUpdated(new Date(Date.now()).toISOString());
+        async function fetch() {
+            let data = { _id: _id, pId: uId };
+            await getFileShared(data);
+            await getDiscussion({ _id: _id, offset: 0 }, 0);
+            setUpdated(new Date(Date.now()).toISOString());
+        }
+        fetch();
     }, [getFileShared, getDiscussion, _id, uId]);
 
 
-    const udpateDiscussion = () => {
-        getDiscussion({ _id: _id, offset: Math.floor(offset / 12) }, 1);
+    const udpateDiscussion = async () => {
+        await getDiscussion({ _id: _id, offset: Math.floor(offset / 12) }, 1);
         setOF(offset + 12);
     };
 
-    const updateChat = () => {
-        getDiscussion({ _id: _id, offset: 0 }, 2);
+    const updateChat = async () => {
+        await getDiscussion({ _id: _id, offset: 0 }, 2);
         setUpdated(new Date(Date.now()).toISOString())
     };
 
     return <Container profile={profile} num={15} isErr={isErr} isSuc={isSuc && file} eT={'User File Not Found'} >
         <ViewFile discussion={discussion} _id={_id} profile={profile && profile.user} count={count} offset={offset} setOF={udpateDiscussion} updated={updated}
-            updateChat={updateChat} File={file} id={id} uId={uId} tabNav={tabNav} setTN={setTN} />
+            updateChat={updateChat} File={file} id={id} uId={uId} tabNav={tabNav} setTN={setTN}
+            disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled}
+        />
     </Container>
 }
 

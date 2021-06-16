@@ -5,9 +5,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const https = require('https');
 const http = require('http');
-const fs = require('fs');
 const compression = require('compression');
 
 //Middleware functions
@@ -25,19 +23,5 @@ function shouldCompress(req, res) {
 //Routes
 require('./routes')(app);
 require('./middlewares/cronJobs');
-
-//Set Two Servers
-var options = {
-    key: fs.readFileSync(__dirname + '/keys/private.key'),
-    cert: fs.readFileSync(__dirname + '/keys/certificate.crt'),
-    ca: fs.readFileSync(__dirname + '/keys/ca_bundle.crt'),
-};
-
-//var http_server = http.createServer(async function (req, res) {
-   // res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
-   // res.end();
-//}).listen(80, function (err) { });
-
-//https.createServer(options, app).listen(443);
 
 http.createServer(app).listen(80);

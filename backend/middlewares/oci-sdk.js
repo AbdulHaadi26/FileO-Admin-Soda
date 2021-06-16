@@ -18,7 +18,8 @@ const client = new os.ObjectStorageClient({
 client.region = common.Region.EU_FRANKFURT_1;
 
 const namespace = 'frgk0srvtiib';
-const compartmentId = 'ocid1.compartment.oc1..aaaaaaaaocszjxmwr2e7rqddl7bunrrnldz56tz7nupy4mpdbgywijf2mdnq'
+const compartmentId = 'ocid1.compartment.oc1..aaaaaaaaws66hhstb5mifdfdoonfmjjqohokts5n56kblwyzbnkuwr2pzttq';
+
 
 const updateBucketMain = async () => {
   try {
@@ -163,11 +164,45 @@ const deleteObject = async (name, subBucket) => {
   });
 }
 
+const createBucket = async (bucketName) => {
+  try {
+    const bucketDetails = {
+      name: bucketName,
+      compartmentId: compartmentId,
+      autoTiering: 'InfrequentAccess'
+
+    };
+    const createBucketRequest = {
+      namespaceName: namespace,
+      createBucketDetails: bucketDetails
+    };
+    const createBucketResponse = await client.createBucket(createBucketRequest);
+    return createBucketResponse;
+  } catch (e) {
+    throw new Error(e.message);
+  }
+}
+
+const deleteBucket = async (bucketName) => {
+  try {
+    const deleteBucketRequest = {
+      namespaceName: namespace,
+      bucketName: bucketName
+    };
+    const deleteBucketResponse = await client.deleteBucket(deleteBucketRequest);
+    return deleteBucketResponse;
+  } catch (e) {
+    throw new Error(e.message);
+  }
+}
+
 module.exports = {
   getPresignedUrl,
   putPresignedUrl,
   deleteObject,
   copyObject,
   copyBasicDoc,
-  getBucketSize
-}
+  getBucketSize,
+  createBucket,
+  deleteBucket
+};

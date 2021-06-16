@@ -7,13 +7,17 @@ import Tabnav from '../../tabnav';
 import { addComment } from '../../../redux/actions/discussionActions';
 import { connect } from 'react-redux';
 import Discussion from '../../discussion';
+import GView from '../../../assets/tabnav/G-admin files.svg';
+import BView from '../../../assets/tabnav/B-admin files.svg';
+let icons = [
+    { G: GView, B: BView }
+];
 const FileType = lazy(() => import('../../containers/fileType'));
 const Select = lazy(() => import('./select'));
 const dF = { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginTop: '12px' };
 const iS = { width: '50px', height: '50px', borderRadius: '1000px', marginRight: '12px' };
-const dF2 = { display: 'flex', justifyContent: 'flex-end', alignItems: 'center' };
 
-const ViewPage = ({ File, setTN, tabNav, addComment, updated, discussion, updateChat, profile, count, offset, setOF, _id }) => {
+const ViewPage = ({ disabled, File, setTN, tabNav, addComment, updated, discussion, updateChat, profile, count, offset, setOF, _id }) => {
     const [width, setWidth] = useState(0), [version, setVer1] = useState([]), [url1, setUrl1] = useState(''), [ver1, setV1] = useState(0), [p1, setP1] = useState(''), [d1, setD1] = useState(''), [desc1, setDesc1] = useState(''),
         [id1, setId] = useState(''), [i1, setI1] = useState(''), [t1, setT1] = useState(''), [message, setMessage] = useState('');
 
@@ -49,13 +53,13 @@ const ViewPage = ({ File, setTN, tabNav, addComment, updated, discussion, update
     const updateWindowDimensions = () => setWidth(window.innerWidth);
 
     const renderAccordingToFileTypesDyn = (type, url, name, p, d, desc, i) => <Suspense fallback={<></>}>
+        <FileType width={width} type={type} url={url} name={name} />
         <div style={dF}>
             <img src={i ? i : User} alt="user" style={iS} />
             <h6 className="name mr-auto">{p}</h6>
             <h6 className="date">Uploaded on {ConvertDate(d)}</h6>
         </div>
         <h6 className="desc">{desc}</h6>
-        <FileType width={width} type={type} url={url} name={name} />
     </Suspense>
 
     const handleSelect = e => {
@@ -75,14 +79,15 @@ const ViewPage = ({ File, setTN, tabNav, addComment, updated, discussion, update
     if (File && File.file) var { name, versioning, compare, category } = File.file;
 
     return <div className="col-11 p-0 sh-w">
-        <h4 className="h">File</h4>
-        <Tabnav items={[name ? name : '']} i={tabNav} setI={setTN} />
-        <div style={dF2}>
-            {id1 !== '' && <ButtonDown id={id1} />}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            <h4 className="h">File</h4>
+            <div style={{ marginLeft: 'auto' }} />
+            {version && version.length > 0 && url1 !== '' && versioning && <Suspense fallback={<></>}>
+                <Select ver1={ver1} version={version} compare={compare} onhandleSelect={handleSelect} />
+            </Suspense>}
+            {id1 !== '' && <ButtonDown id={id1} disabled={disabled} />}
         </div>
-        {version && version.length > 0 && url1 !== '' && versioning && <Suspense fallback={<></>}>
-            <Select ver1={ver1} version={version} compare={compare} onhandleSelect={handleSelect} />
-        </Suspense>}
+        <Tabnav items={[name ? name : '']} i={tabNav} icons={icons} setI={setTN} />
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' }}>
             <div className="col-lg-8 col-12">
                 {url1 !== '' && t1 !== '' && !versioning && !compare && renderAccordingToFileTypesDyn(t1, url1, name, p1, d1, desc1, i1)}

@@ -8,25 +8,29 @@ const Details = lazy(() => import('../../components/notes/detailsView'));
 const NotePage = ({ getNote, profile, isErr, isSuc, note, rec, match, getDiscussion, discussion, count }) => {
     const { id, _id, nId } = match.params, [tabNav, setTN] = useState(0), [offset, setOF] = useState(12), [updated, setUpdated] = useState('');
     useEffect(() => {
-        getNote(nId);
-        getDiscussion({ _id: nId, offset: 0 }, 0);
-        setUpdated(new Date(Date.now()).toISOString())
+        async function fetch() {
+            await getNote(nId);
+            await getDiscussion({ _id: nId, offset: 0 }, 0);
+            setUpdated(new Date(Date.now()).toISOString());
+        }
+        fetch();
     }, [getNote, nId, getDiscussion]);
 
-    const udpateDiscussion = () => {
-        getDiscussion({ _id: nId, offset: Math.floor(offset / 12) }, 1);
+    const udpateDiscussion = async () => {
+        await getDiscussion({ _id: nId, offset: Math.floor(offset / 12) }, 1);
         setOF(offset + 12);
     };
 
-    const updateChat = () => {
-        getDiscussion({ _id: nId, offset: 0 }, 2);
+    const updateChat = async () => {
+        await getDiscussion({ _id: nId, offset: 0 }, 2);
         setUpdated(new Date(Date.now()).toISOString())
     };
 
-
     return <Container isErr={isErr} isSuc={isSuc && note} eT={'Note Not Found'} num={15}>
         <Details discussion={discussion} Note={note} count={count} offset={offset} setOF={udpateDiscussion} updated={updated} updateChat={updateChat}
-            org={id} _id={_id} Rec={rec ? rec : ''} profile={profile && profile.user ? profile.user : ''} tabNav={tabNav} setTN={setTN} />
+            org={id} _id={_id} Rec={rec ? rec : ''} profile={profile && profile.user ? profile.user : ''} tabNav={tabNav} setTN={setTN}
+            disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled}
+        />
     </Container>
 }
 

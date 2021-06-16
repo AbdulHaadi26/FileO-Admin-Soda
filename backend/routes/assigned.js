@@ -10,10 +10,6 @@ const {
 } = require('../middlewares/oracleDB');
 
 const {
-    getAllRoles
-} = require('../schemas/projectRoles');
-
-const {
     getAllProjectCountP,
     getAllProjectLimitP,
     getAllProjectQueryCountP,
@@ -24,9 +20,7 @@ const {
     getAllUserCountP,
     getAllUserLimitP,
     getAllUserQueryCountP,
-    getAllUserQueryLimitP,
-    updateAssignedUser,
-    getUserByRoles
+    getAllUserQueryLimitP
 } = require('../schemas/projectAssigned');
 
 const {
@@ -40,9 +34,10 @@ const {
 const {
     updateRecFileU
 } = require('../schemas/recentProjectFiles');
-const { createNotification, userRolesChanged } = require('../schemas/notification');
+const { createNotification } = require('../schemas/notification');
 const { findUserById } = require('../schemas/user');
 const { getSetting } = require('../schemas/setting');
+const { fileOUrl, baseUrl, logoUrl } = require('../constants');
 
 router.put('/register', JWT, async (req, res) => {
     var connection;
@@ -52,25 +47,26 @@ router.put('/register', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionProjs, collectionAss, collectionNotifs, collectionSets, collectionUser] = [
-            await soda.createCollection('projs'), await soda.createCollection('proj_assigned'), await soda.createCollection('notifs'),
-            await soda.createCollection('sets'), await soda.createCollection('users')
-        ];
+        const collectionProjs = await soda.createCollection('projs');
+        const collectionAss = await soda.createCollection('proj_assigned');
+        const collectionNotifs = await soda.createCollection('notifs');
+        const collectionSets = await soda.createCollection('sets');
+        const collectionUser = await soda.createCollection('users');
 
-        const { name, org, userId, pId, roles, orgName } = req.body;
-        const project = await getProjectById(pId, collectionProjs);
+        const { name, org, userId, pId, orgName } = req.body;
+
+        let project = await getProjectById(pId, collectionProjs);
 
         if (!project) throw new Error('Project not found.');
 
-        let p1 = isExist(userId, org, pId, collectionAss);
-        let p2 = findUserById(userId, collectionUser);
-        let p3 = findUserById(project.managerId, collectionUser);
-        const [isEx, user, projectManager] = [await p1, await p2, await p3];
+        let isEx = await isExist(userId, org, pId, collectionAss);
+        let user = await findUserById(userId, collectionUser);
+        let projectManager = await findUserById(project.managerId, collectionUser);
 
         if (!isEx && user && projectManager) {
             let projData = {
                 projId: pId, orgName: orgName, org: org, userId: userId, created: Date.now(), date: new Date(),
-                userName: name, userRoles: roles, projName: project.name
+                userName: name, projName: project.name
             };
 
             await createProjAssigned(projData, collectionAss);
@@ -94,17 +90,17 @@ router.put('/register', JWT, async (req, res) => {
                 to: user.email,
                 subject: 'File-O Projects',
                 html: `
-                <img src="https://demo1.file-o.com/public/static/logo.png" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
+                <img src="${logoUrl}" alt="File-O Logo" style="width: 60px; height: 73px; margin-left:50%; margin-top: 30px;"/>
                 <h2 style="margin-left: 50%;">File-O</h2>
                 <br/>
                 <h3 style="font-weight:400;">Dear <b>${user.name}</b>,</h3>
             
                 <p>You have been added as a participant in ${project.name} by ${projectManager.name} in File-O. </p>
                 <p> 
-                    <a rel="noopener noreferrer" target="_blank" href="https://demo1login.file-o.com">Login</a> now to know more about this project, your role and the files related to your role.
+                    <a rel="noopener noreferrer" target="_blank" href="${baseUrl}">Login</a> now to know more about this project, your role and the files related to your role.
                 </p>
 
-                <p>Thank you for using File-O. Questions or concerns? Contact <a rel="noopener noreferrer" target="_blank" href="https://www.file-o.com/support">File-O Support</a>.</p>
+                <p>Thank you for using File-O. Questions or concerns? Contact <a rel="noopener noreferrer" target="_blank" href="${fileOUrl}/support">File-O Support</a>.</p>
                 <br/>
 
                 Sincerely,
@@ -115,8 +111,10 @@ router.put('/register', JWT, async (req, res) => {
             `};
 
             transporter.sendMail(mailOptions, async function (error, info) {
-                res.json({ assigned: projData });
+
             });
+
+            res.json({ assigned: projData });
         } else throw new Error('User already assigned to project');
     } catch (e) {
         console.log(e);
@@ -156,17 +154,13 @@ router.get('/getEmployee', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionAss, collectionUser, collectionRoles, collectionCats] = [
-            await soda.createCollection('proj_assigned'), await soda.createCollection('users'),
-            await soda.createCollection('proj_roles'), await soda.createCollection('proj_cats')
-        ];
+        const collectionAss = await soda.createCollection('proj_assigned');
+        const collectionUser = await soda.createCollection('users');
 
         const { _id, pId } = req.query;
-        const p1 = getAssignedUserById(_id, pId, collectionAss, collectionUser, collectionRoles, collectionCats);
-        const p2 = getAllRoles(pId, collectionRoles);
-        let [user, roleList] = [await p1, await p2];
+        let user = await getAssignedUserById(_id, pId, collectionAss, collectionUser);
 
-        res.json({ user: user, roleList: roleList });
+        res.json({ user: user });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -183,53 +177,17 @@ router.get('/getUser/:pId', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionAss, collectionUser, collectionRoles, collectionCats] = [
-            await soda.createCollection('proj_assigned'), await soda.createCollection('users'),
-            await soda.createCollection('proj_roles'), await soda.createCollection('proj_cats')
-        ];
+        const collectionAss = await soda.createCollection('proj_assigned');
+        const collectionUser = await soda.createCollection('users');
 
         const { _id } = req.token;
         const { pId } = req.params;
-        const user = await getAssignedUserById(_id, pId, collectionAss, collectionUser, collectionRoles, collectionCats);
+
+        let user = await getAssignedUserById(_id, pId, collectionAss, collectionUser);
+
         if (!user) throw new Error('Could not find employee.');
 
         res.json({ user: user });
-    } catch (e) {
-        console.log(e);
-        res.json({ error: e.message });
-    } finally {
-        await closeConnection(connection);
-    }
-});
-
-router.post('/updateAssigned', JWT, async (req, res) => {
-    var connection;
-    try {
-        connection = await getConnection();
-        if (!connection) throw new Error('Connection has not been intialized yet.');
-        const soda = await getSodaDatabase(connection);
-        if (!soda) throw new Error('Soda database has not been intialized yet.');
-
-        const [collectionAss, collectionUser, collectionRoles, collectionCats, collectionPRecfs, collectionFvrFiles, collectionNotifs] = [
-            await soda.createCollection('proj_assigned'), await soda.createCollection('users'),
-            await soda.createCollection('proj_roles'), await soda.createCollection('proj_cats'),
-            await soda.createCollection('precfs'), await soda.createCollection('favr_files'),
-            await soda.createCollection('notifs')
-        ];
-
-        const { _id, roles, pId } = req.body;
-
-        let userIds = await getUserByRoles(req.token.org, roles, collectionRoles);
-        await userRolesChanged(userIds, 1, collectionNotifs);
-
-        await updateAssignedUser(_id, pId, roles, collectionAss);
-        const p1 = getAssignedUserById(_id, pId, collectionAss, collectionUser, collectionRoles, collectionCats);
-        const p2 = getAllRoles(pId, collectionRoles);
-
-        [await updateRecFileU(_id, pId, collectionPRecfs), await updateFvrFileU(_id, pId, collectionFvrFiles)];
-        let [user, roleList] = [await p1, await p2];
-
-        res.json({ user: user, roleList: roleList });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -246,13 +204,15 @@ router.post('/deleteAssigned', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionAss, collectionPRecfs, collectionFvrFiles] = [
-            await soda.createCollection('proj_assigned'), await soda.createCollection('precfs'), await soda.createCollection('favr_files')
-        ];
+        const collectionAss = await soda.createCollection('proj_assigned');
+        const collectionPRecfs = await soda.createCollection('precfs');
+        const collectionFvrFiles = await soda.createCollection('favr_files');
 
         const { _id, pId } = req.body;
         await collectionAss.find().filter({ userId: _id, projId: pId }).remove();
-        [await updateRecFileU(_id, pId, collectionPRecfs), await updateFvrFileU(_id, pId, collectionFvrFiles)];
+
+        await updateRecFileU(_id, pId, collectionPRecfs);
+        await updateFvrFileU(_id, pId, collectionFvrFiles);
 
         return res.json({ success: true });
     } catch (e) {
@@ -272,8 +232,10 @@ router.get('/getEmployeeCount', JWT, async (req, res) => {
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
         const collectionAss = await soda.createCollection('proj_assigned');
+
         const { pId } = req.query;
-        let count = await getAllUserCountP(pId, collectionAss);
+
+        let count = await getAllUserCountP(pId, [], collectionAss);
 
         return res.json({ userCount: count });
     } catch (e) {
@@ -292,12 +254,11 @@ router.get('/getEmployees', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionAss, collectionUser] = [
-            await soda.createCollection('proj_assigned'), await soda.createCollection('users')
-        ];
+        const collectionAss = await soda.createCollection('proj_assigned');
+        const collectionUser = await soda.createCollection('users');
 
         const { offset, pId } = req.query;
-        let userList = await getAllUserLimitP(offset, pId, collectionAss, collectionUser);
+        let userList = await getAllUserLimitP(offset, pId, [], collectionAss, collectionUser);
 
         return res.json({ users: userList });
     } catch (e) {
@@ -319,7 +280,7 @@ router.get('/searchEmployeeCount', JWT, async (req, res) => {
         const collectionAss = await soda.createCollection('proj_assigned');
 
         const { string, pId } = req.query;
-        let count = await getAllUserQueryCountP(string, pId, collectionAss);
+        let count = await getAllUserQueryCountP(string, pId, [], collectionAss);
 
         return res.json({ userCount: count });
     } catch (e) {
@@ -338,12 +299,11 @@ router.get('/searchEmployees', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionAss, collectionUser] = [
-            await soda.createCollection('proj_assigned'), await soda.createCollection('users')
-        ];
+        const collectionAss = await soda.createCollection('proj_assigned');
+        const collectionUser = await soda.createCollection('users');
 
         const { offset, string, pId } = req.query;
-        let userList = await getAllUserQueryLimitP(offset, string, pId, collectionAss, collectionUser);
+        let userList = await getAllUserQueryLimitP(offset, string, pId, [], collectionAss, collectionUser);
 
         return res.json({ users: userList });
     } catch (e) {
@@ -384,7 +344,8 @@ router.get('/getProjects', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionProj, collectionAssigned] = [await soda.createCollection('projs'), await soda.createCollection('proj_assigned')];
+        const collectionProj = await soda.createCollection('projs');
+        const collectionAssigned = await soda.createCollection('proj_assigned');
 
         const { limit, uId } = req.query;
 
@@ -429,9 +390,8 @@ router.get('/searchProjects', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionProj, collectionAssigned] = [
-            await soda.createCollection('projs'), await soda.createCollection('proj_assigned')
-        ];
+        const collectionProj = await soda.createCollection('projs');
+        const collectionAssigned = await soda.createCollection('proj_assigned');
 
         const { limit, string, uId } = req.query;
         let projList = await getAllProjectQueryLimitP(limit, string, uId, collectionAssigned, collectionProj);

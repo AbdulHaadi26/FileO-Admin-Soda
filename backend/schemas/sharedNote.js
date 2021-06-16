@@ -292,13 +292,13 @@ module.exports = {
         }
     },
 
-    updateNoteUptS: async (_id, value, collection) => {
+    updateNoteUptS: async (_id, value, postedBy, collection) => {
         try {
             let doc = await collection.find().filter({ noteId: _id }).getDocuments();
             if (doc) {
                 await Promise.all(doc.map(async document => {
                     let note = document.getContent();
-                    note.updated = value;
+                    if (postedBy !== note.postedby) note.updated = value;
                     await collection.find().fetchArraySize(0).key(document.key).replaceOne(note);
                 }))
             }
@@ -324,7 +324,7 @@ module.exports = {
 
     getAllUptNoteCountS: async (_id, value, collection) => {
         try {
-            const doc = await collection.find().filter({ sharedWith: _id, updated: true, isTask: { $ne: value } }).count();
+            const doc = await collection.find().filter({ sharedWith: _id, updated: true, isTask: { $eq: value } }).count();
             if (doc) return doc.count;
             return 0;
         } catch (e) {

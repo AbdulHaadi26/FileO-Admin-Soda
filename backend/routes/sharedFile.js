@@ -201,17 +201,19 @@ router.post('/register', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFile, collectionUser, collectionSharedF, collectionNotif] = [
-            await soda.createCollection('user_files'), await soda.createCollection('users'), await soda.createCollection('shrs'), await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('user_files');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
+        const collectionNotif = await soda.createCollection('notifs');
 
         const { sWith, name, fileId } = req.body;
-        let p1 = findFileByIdP(fileId, collectionFile, collectionUser);
-        let p2 = getAllUserFileIds(fileId, collectionSharedF, collectionUser);
-        let p3 = isExist(sWith, fileId, collectionSharedF, collectionUser);
-        let p4 = findUserById(sWith, collectionUser);
-        const [file, arrId, isEx, user] = [await p1, await p2, await p3, await p4];
+        let file = await findFileByIdP(fileId, collectionFile, collectionUser);
+        let arrId = await getAllUserFileIds(fileId, collectionSharedF, collectionUser);
+        let isEx = await isExist(sWith, fileId, collectionSharedF, collectionUser);
+        let user = await findUserById(sWith, collectionUser);
+
         arrId.push(user.email);
+
         if (!isEx) {
             var sharedData = {
                 sharedWName: name, type: file.type, sharedWith: sWith, updated: true,
@@ -221,11 +223,11 @@ router.post('/register', JWT, async (req, res) => {
             };
             await createSharedF(sharedData, collectionSharedF);
         }
-        let p5 = getAllUserSharedCountP(file.org, arrId, req.token._id, collectionUser);
-        let p6 = getAllUserSharedLimitP(0, file.org, arrId, req.token._id, collectionUser);
-        let p7 = getAllAssignedCount(fileId, collectionSharedF);
-        let p8 = getAllAssignedLimit(fileId, 0, collectionSharedF, collectionUser);
-        const [userCount, userList, assignedCount, assignedList] = [await p5, await p6, await p7, await p8];
+
+        let userCount = await getAllUserSharedCountP(file.org, arrId, req.token._id, collectionUser);
+        let userList = await getAllUserSharedLimitP(0, file.org, arrId, req.token._id, collectionUser);
+        let assignedCount = await getAllAssignedCount(fileId, collectionSharedF);
+        let assignedList = await getAllAssignedLimit(fileId, 0, collectionSharedF, collectionUser);
 
         let date = parseDate();
         let title = `${file.postedby.name} has shared a file with you.`, message = `A new file ${file.name} has been shared by ${file.postedby.name} with you on ${date} in File-O.`;
@@ -269,9 +271,8 @@ router.get('/getEmployeeCount', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { _id, fId } = req.query;
 
@@ -295,9 +296,8 @@ router.get('/getEmployees', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { offset, _id, fId } = req.query;
 
@@ -321,9 +321,8 @@ router.get('/searchEmployeeCount', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { string, _id, fId } = req.query;
 
@@ -347,14 +346,15 @@ router.get('/searchEmployees', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { offset, string, _id, fId } = req.query;
-        var arrId = await getAllUserFileIds(fId, collectionSharedF, collectionUser);
 
-        var userList = await getAllUserSharedQueryLimitP(offset, string, _id, arrId, req.token._id, collectionUser);
+        let arrId = await getAllUserFileIds(fId, collectionSharedF, collectionUser);
+
+        let userList = await getAllUserSharedQueryLimitP(offset, string, _id, arrId, req.token._id, collectionUser);
+
         return res.json({ users: userList });
     } catch (e) {
         console.log(e);
@@ -395,9 +395,8 @@ router.get('/getAssigned', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { limit, _id } = req.query;
 
@@ -444,9 +443,8 @@ router.get('/searchAssigned', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { limit, string, _id } = req.query;
 
@@ -491,9 +489,9 @@ router.get('/getFiles', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF, collectionFile] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs'), await soda.createCollection('user_files')
-        ];
+        const collectionFile = await soda.createCollection('user_files');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { limit, _id, type } = req.query;
         let fileList = await getAllFileLimit(_id, limit, type, collectionSharedF, collectionFile, collectionUser);
@@ -516,7 +514,9 @@ router.get('/searchFileCount', JWT, async (req, res) => {
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
         const collectionSharedF = await soda.createCollection('shrs');
+
         const { string, _id, type, search } = req.query;
+
         let count = await getAllFileQueryCount(_id, string, type, search, collectionSharedF);
 
         return res.json({ fileCount: count });
@@ -536,9 +536,9 @@ router.get('/searchFile', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF, collectionFile] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs'), await soda.createCollection('user_files')
-        ];
+        const collectionFile = await soda.createCollection('user_files');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { limit, string, _id, type, search } = req.query;
         let fileList = await getAllFileQueryLimit(_id, limit, string, type, search, collectionSharedF, collectionFile, collectionUser);
@@ -560,7 +560,8 @@ router.get('/getFile', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionSharedF, collectionFile] = [await soda.createCollection('shrs'), await soda.createCollection('user_files')];
+        const collectionFile = await soda.createCollection('user_files');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { _id, type, search, string } = req.query;
         let fileList;
@@ -585,23 +586,22 @@ router.post('/delete', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF, collectionFile, collectionNotif] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs'), await soda.createCollection('user_files'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('user_files');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
+        const collectionNotif = await soda.createCollection('notifs');
 
         const { sWith, fileId } = req.body;
-        [await deleteAssigned(sWith, fileId, collectionSharedF), await fileChangedU(fileId, [sWith], collectionNotif)];
+        await deleteAssigned(sWith, fileId, collectionSharedF);
+        await fileChangedU(fileId, [sWith], collectionNotif);
 
-        var p1 = findFileById(fileId, collectionFile);
-        var p2 = getAllUserFileIds(fileId, collectionFile, collectionUser);
-        var [file, arrId] = [await p1, await p2];
+        let file = await findFileById(fileId, collectionFile);
+        let arrId = await getAllUserFileIds(fileId, collectionFile, collectionUser);
 
-        var p3 = getAllUserSharedCountP(file.org, arrId, req.token._id, collectionUser);
-        var p4 = getAllUserSharedLimitP(0, file.org, arrId, req.token._id, collectionUser);
-        var p5 = getAllAssignedCount(fileId, collectionSharedF);
-        var p6 = getAllAssignedLimit(fileId, 0, collectionSharedF, collectionUser);
-        var [userCount, userList, assignedCount, assignedList] = [await p3, await p4, await p5, await p6];
+        let userCount = await getAllUserSharedCountP(file.org, arrId, req.token._id, collectionUser);
+        let userList = await getAllUserSharedLimitP(0, file.org, arrId, req.token._id, collectionUser);
+        let assignedCount = await getAllAssignedCount(fileId, collectionSharedF);
+        let assignedList = await getAllAssignedLimit(fileId, 0, collectionSharedF, collectionUser);
 
         res.json({ userCount: userCount, users: userList, assigned: assignedList, assignedCount: assignedCount });
     } catch (e) {
@@ -620,23 +620,22 @@ router.post('/deleteAll', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionSharedF, collectionFile, collectionNotif] = [
-            await soda.createCollection('users'), await soda.createCollection('shrs'), await soda.createCollection('user_files'),
-            await soda.createCollection('notifs')
-        ];
+        const collectionFile = await soda.createCollection('user_files');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedF = await soda.createCollection('shrs');
+        const collectionNotif = await soda.createCollection('notifs');
 
         const { fileId } = req.body;
-        [await deleteAssignedAll(fileId, collectionSharedF), await fileChanged(fileId, collectionNotif)];
+        await deleteAssignedAll(fileId, collectionSharedF);
+        await fileChanged(fileId, collectionNotif);
 
-        var p1 = findFileById(fileId, collectionFile);
-        var p2 = getAllUserFileIds(fileId, collectionFile, collectionUser);
-        var [file, arrId] = [await p1, await p2];
+        let file = await findFileById(fileId, collectionFile);
+        let arrId = await getAllUserFileIds(fileId, collectionFile, collectionUser);
 
-        var p3 = getAllUserSharedCountP(file.org, arrId, req.token._id, collectionUser);
-        var p4 = getAllUserSharedLimitP(0, file.org, arrId, req.token._id, collectionUser);
-        var p5 = getAllAssignedCount(fileId, collectionSharedF);
-        var p6 = getAllAssignedLimit(fileId, 0, collectionSharedF, collectionUser);
-        var [userCount, userList, assignedCount, assignedList] = [await p3, await p4, await p5, await p6];
+        let userCount = await getAllUserSharedCountP(file.org, arrId, req.token._id, collectionUser);
+        let userList = await getAllUserSharedLimitP(0, file.org, arrId, req.token._id, collectionUser);
+        let assignedCount = await getAllAssignedCount(fileId, collectionSharedF);
+        let assignedList = await getAllAssignedLimit(fileId, 0, collectionSharedF, collectionUser);
 
         res.json({ userCount: userCount, users: userList, assigned: assignedList, assignedCount: assignedCount });
     } catch (e) {

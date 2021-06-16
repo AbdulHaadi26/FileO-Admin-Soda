@@ -42,15 +42,18 @@ router.post('/register', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFvrFile, collectionFile, collectionPFile, collectionUFile, collectionCFile] = [
-            await soda.createCollection('favr_files'), await soda.createCollection('files'),
-            await soda.createCollection('proj_files'), await soda.createCollection('user_files'), await soda.createCollection('client_files')
-        ];
+        const collectionFvrFile = await soda.createCollection('favr_files');
+        const collectionFile = await soda.createCollection('files');
+        const collectionPFile = await soda.createCollection('proj_files');
+        const collectionUFile = await soda.createCollection('user_files');
+        const collectionCFile = await soda.createCollection('client_files');
 
         const { fileId, fileType, pId } = req.body;
 
         const { _id } = req.token;
+
         let favrFile = await findFvrFileById(fileId, _id, collectionFvrFile);
+
         if (favrFile) await deleteById(favrFile._id, collectionFvrFile);
 
         var file;
@@ -156,12 +159,11 @@ router.get('/getFiles', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFvrFile, collectionUser] = [
-            await soda.createCollection('favr_files'), await soda.createCollection('users')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionFvrFile = await soda.createCollection('favr_files');
 
-        const { offset, type } = req.query;
-        let fileList = await getFileLimit(offset, req.token._id, type, collectionFvrFile, collectionUser);
+        const { type } = req.query;
+        let fileList = await getFileLimit(req.token._id, type, collectionFvrFile, collectionUser);
 
         return res.json({ files: fileList });
     } catch (e) {
@@ -180,12 +182,11 @@ router.get('/searchFileCount', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFvrFile, collectionUser] = [
-            await soda.createCollection('favr_files'), await soda.createCollection('users')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionFvrFile = await soda.createCollection('favr_files');
 
         const { string, type } = req.query;
-        var count = await getFileQueryCount(req.token._id, string, type, collectionFvrFile, collectionUser);
+        let count = await getFileQueryCount(req.token._id, string, type, collectionFvrFile, collectionUser);
 
         return res.json({ fileCount: count });
     } catch (e) {
@@ -203,12 +204,12 @@ router.get('/searchFiles', JWT, async (req, res) => {
         if (!connection) throw new Error('Connection has not been intialized yet.');
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
-        const [collectionFvrFile, collectionUser] = [
-            await soda.createCollection('favr_files'), await soda.createCollection('users')
-        ];
 
-        const { offset, string, type } = req.query;
-        var fileList = await getFileQueryLimit(offset, req.token._id, string, type, collectionFvrFile, collectionUser);
+        const collectionUser = await soda.createCollection('users');
+        const collectionFvrFile = await soda.createCollection('favr_files');
+
+        const { string, type } = req.query;
+        let fileList = await getFileQueryLimit(req.token._id, string, type, collectionFvrFile, collectionUser);
 
         return res.json({ files: fileList });
     } catch (e) {

@@ -1,0 +1,114 @@
+.contact {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.contact .mid {
+    margin-top: 80px;
+    width: 100%;
+    height: auto;
+    background-color: #fff;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 36px;
+}
+
+.contact-row {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 12px;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.contact-row h3 {
+    font-weight: 700;
+    font-size: 28px;
+}
+
+.contact-row p {
+    font-size: 14px;
+    margin-top: 12px;
+    font-weight: 500;
+    color: #888888;
+}
+
+.contact-row h6 {
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.contact-row h5 {
+    font-weight: 500;
+    color: black;
+}
+
+.contact-row img {
+    width: 70%;
+}
+
+.contact-row .form {
+    width: 100%;
+    border-radius: 8px;
+    padding: 30px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    background-color: #f9f9f9;
+}
+
+.form .h, .form .input-group {
+    width: 100%;
+}
+
+.form .h {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgb(84, 84, 84);
+}
+
+.form .input-group {
+    margin-bottom: 12px;
+}
+
+.form .btn-submit {margin-top: 12px;
+    border-radius: 1000px;
+    background-color: #008CBD;
+    color: white;
+    font-size: 14px;
+    padding: 6px 36px;
+    border: none;
+    outline: none;
+}
+
+.contact .mid .shadow{
+    border: solid 1px #dcdde1;
+    box-shadow: none;
+    outline: none;
+    padding: 0px;
+    margin-top: 0px;
+    border-radius: 1000px;
+}
+
+.contact .mid input, .contact .mid textarea, .contact .mid select {
+    border: none;
+    box-shadow: none;
+    outline: none;
+    padding: 6px 12px;
+    background-color: white;
+    border-radius: 1000px;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+   -webkit-transition-delay: 9999s;
+   transition-delay: 9999s;
+}

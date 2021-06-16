@@ -1,0 +1,97 @@
+.home .top-nav {
+    padding: 18px 12px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 1px rgba(255, 255, 255, 0.5) solid;
+    flex-wrap: wrap;
+}
+
+.home .top-nav .logo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.home .top-nav .logo img {
+    width: 37px;
+    height: 50px;
+    margin-right: 12px;
+}
+
+.home .top-nav .logo h3 {
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    color: white;
+    margin-bottom: -12px;
+}
+
+.home .top-nav .sub-nav {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: -12px;
+}
+
+.home .top-nav .link {
+    color: white;
+    margin-right: 16px;
+    font-weight: 400;
+    font-size: 14px;
+    padding: 3px;
+    text-decoration: none;
+    padding: 6px 12px;
+}
+
+.home .top-nav .sub-nav .button {
+    background-color: white;
+    margin-right: 16px;
+    font-weight: 400;
+    padding: 3px;
+    font-size: 14px;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 1000px;
+    color: #3AAED5;
+    box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.05), 0 1px 2px 1px rgba(0, 0, 0, 0.1);
+}
+
+.home .top-nav .active {
+    color: white;
+    margin-right: 16px;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 3px;
+    text-decoration: none;
+    padding: 6px 12px;
+}
+
+@media only screen and (max-width: 992px) {
+    .home .top-nav .sub-nav {
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+    }
+    .home .top-nav .link {
+        margin-right: 0px;
+    }
+    .home .top-nav .sub-nav .button {
+        margin-right: 0px;
+        padding: 4px 12px;
+        margin-bottom: 12px;
+    }
+
+    .home .top-nav .burger {
+        background-color: white;
+        padding: 6px 12px;
+        border-radius: 4px;
+        border: none;
+        outline: none;
+        box-shadow: 0 1px 2px 1px rgba(0, 0, 0, 0.14), 0 1px 2px 1px rgba(0, 0, 0, 0.3);
+    }
+    
+    .home .top-nav .burger:hover {
+        box-shadow: 0 4px 6px 8px rgba(0, 0, 0, 0.14), 0 1px 2px 1px rgba(0, 0, 0, 0.3);
+    }
+}

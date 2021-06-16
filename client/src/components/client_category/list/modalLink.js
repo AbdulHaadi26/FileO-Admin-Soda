@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { generateUrl } from '../../../redux/actions/clientFilesAction';
 import { ModalProcess } from '../../../redux/actions/profileActions';
+import { clientUrl } from '../../../utils/api';
 import ModalL from '../../containers/linkContainer';
 const mT = { marginTop: '12px', backgroundColor: '#dfe6e9', padding: '4px 12px 4px 12px', borderRadius: '4px', cursor: 'pointer', wordBreak: 'break-all' };
 
 const Modal = ({ _id, catId, showModal, generateUrl, ModalProcess }) => {
     const [link, setLink] = useState(''), [date, setDate] = useState(new Date(Date.now()).toISOString().substr(0, 10)), [check, setChecked] = useState(false);
 
-    useEffect(() => setLink(`https://demo1client.file-o.com/client/${_id}/file/upload`), [setLink, _id, catId]);
+    useEffect(() => setLink(`${clientUrl}/client/${_id}/file/upload`), [setLink, _id, catId]);
 
     const onhandleModal = (e, val) => showModal(e, val);
 

@@ -10,16 +10,40 @@ module.exports = {
         }
     },
 
+    getVerCount: async (key, collection) => {
+        try {
+            let doc = await collection.find().filter({ versionId: key }).count();
+            if (!doc || doc.count === 0) throw new Error('Count not found');
+
+            return doc.count;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getAllFileCountTypeU: async (pId, types, collection) => {
+        try {
+            const doc = await collection.find().filter({ postedby: pId, isVersion: false, type: { $in: types } }).count();
+            if (doc) return doc.count;
+            return 0;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
     getLatestVer: async (key, collection) => {
         try {
             let doc = await collection.find().filter({ $query: { versionId: key }, $orderby: { version: 1 } }).getDocuments();
             let item;
+
             if (doc) doc.map(document => {
                 let tempDoc = document.getContent();
                 tempDoc._id = document.key;
                 item = tempDoc;
             });
+
             return item;
+
         } catch (e) {
             throw new Error(e.message);
         }
@@ -90,6 +114,7 @@ module.exports = {
                         nameS.push(tempDocName.name);
                     })
                 }
+
                 if (names && names.length > 0) {
                     const docFilter = await collection.find().filter({ name: { $in: nameS }, category: cat }).getDocuments();
                     if (docFilter) {
@@ -99,6 +124,7 @@ module.exports = {
                         });
                     }
                 }
+
                 if (filterArr && filterArr.length > 0 && names && names.length > 0) {
                     names = names.filter(rt => !filterArr.find(i => rt.name === i.name));
                     names.map(i => arr.push(i._id));
@@ -136,9 +162,59 @@ module.exports = {
                 case 'name': document.name = value; break;
                 case 'description': document.description = value; break;
                 case 'category': document.category = value; break;
-                case 'update': document.updated = value; break;
+                case 'update':
+                    document.last_updated = new Date(Date.now());
+                    document.updated = value;
+                    break;
+                case 'last_updated':
+                    document.last_updated = new Date(Date.now());
+                    break;
             }
             await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateLatestVer: async (key, len, versionId, cat, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+
+            let document = docToReplace.getContent();
+            document.version = Number(len);
+            document.versionId = versionId;
+            document.category = cat;
+            if (Number(len) === 0) {
+                document.isVersion = false;
+            } else {
+                document.isVersion = true;
+            }
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateCat: async (key, cat, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+            let document = docToReplace.getContent();
+            document.category = cat;
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+
+            let docArr = await collection.find().filter({ versionId: document.versionId, isVersion: true }).getDocuments();
+            if (docArr) await Promise.all(docArr.map(async doc => {
+                let docR = doc.getContent();
+                docR.category = cat;
+                await collection.find().fetchArraySize(0).key(doc.key).replaceOne(docR);
+            }));
+
             document._id = docToReplace.key;
             return document;
         } catch (e) {
@@ -152,9 +228,9 @@ module.exports = {
             if (!docToReplace) return false;
 
             let document = docToReplace.getContent();
-            document.name = name; 
+            document.name = name;
             document.description = desc;
-            document.category = cat; 
+            document.category = cat;
             await collection.find().fetchArraySize(0).key(key).replaceOne(document);
             document._id = docToReplace.key;
             return document;
@@ -268,9 +344,30 @@ module.exports = {
         }
     },
 
+    findFileByNameC: async (name, postedby, category, collection, collectionCat) => {
+        try {
+            const document = await collection.find().fetchArraySize(0).filter({ name: name, postedby: postedby, category: category }).getOne();
+            if (!document) return false;
+
+            let tempDoc = document.getContent();
+            tempDoc._id = document.key;
+            if (tempDoc.category) {
+                let doc = await collectionCat.find().fetchArraySize(0).key(tempDoc.category).getOne();
+                if (doc) {
+                    let tempCat = doc.getContent();
+                    tempCat._id = doc.key;
+                    tempDoc.category = tempCat;
+                }
+            }
+            return tempDoc;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
     findFileByNameVer: async (name, postedby, category, version, collection) => {
         try {
-            const doc = await collection.find().fetchArraySize(0).filter({ postedby: postedby, name: name, version, category: category }).getOne();
+            const doc = await collection.find().fetchArraySize(0).filter({ postedby: postedby, name: name, version: Number(version), category: category }).getOne();
             if (doc) throw new Error('File with this name already exists');
             return false;
         } catch (e) {
@@ -396,8 +493,8 @@ module.exports = {
     getAllFileLimitCombinedU: async (pId, cat, type, collection) => {
         try {
             let doc, files = [];
-            if (type === 'All') doc = await collection.find().filter({ postedby: pId, category: cat, isVersion: false }).getDocuments();
-            else doc = await collection.find().filter({ postedby: pId, category: cat, type: type, isVersion: false }).getDocuments();
+            if (type === 'All') doc = await collection.find().filter({ postedby: pId, category: cat ? cat : '', isVersion: false }).getDocuments();
+            else doc = await collection.find().filter({ postedby: pId, category: cat ? cat : '', type: type, isVersion: false }).getDocuments();
             if (doc) doc.map(document => {
                 let tempDoc = document.getContent();
                 tempDoc._id = document.key;
@@ -414,6 +511,22 @@ module.exports = {
             let doc, files = [];
             if (type === 'All') doc = await collection.find().filter({ postedby: pId, category: cat, isVersion: false, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
             else doc = await collection.find().filter({ postedby: pId, category: cat, type: type, isVersion: false, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
+            if (doc) doc.map(document => {
+                let tempDoc = document.getContent();
+                tempDoc._id = document.key;
+                files.push(tempDoc);
+            });
+            return files;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getAllFileLimitCombinedUSL: async (pId, cat, type, string, collection) => {
+        try {
+            let doc, files = [];
+            if (type === 'All') doc = await collection.find().filter({ postedby: pId, category: cat, isVersion: false, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).limit(15).getDocuments();
+            else doc = await collection.find().filter({ postedby: pId, category: cat, type: type, isVersion: false, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).limit(15).getDocuments();
             if (doc) doc.map(document => {
                 let tempDoc = document.getContent();
                 tempDoc._id = document.key;
@@ -466,6 +579,21 @@ module.exports = {
         }
     },
 
+    getAllFileVersionC: async (_id, collection) => {
+        try {
+            const doc = await collection.find().filter({ $query: { versionId: _id }, $orderby: { created: -1 } }).getDocuments();
+            let files = [];
+            if (doc) doc.map(document => {
+                let tempDoc = document.getContent();
+                tempDoc._id = document.key;
+                files.push(tempDoc);
+            });
+            return files;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
     getAllCatFile: async (_id, collection) => {
         try {
             const doc = await collection.find().filter({ category: _id }).getDocuments();
@@ -501,12 +629,39 @@ module.exports = {
 
     resetVersion: async (_id, ver, collection) => {
         try {
-            const doc = await collection.find().filter({ versionId: _id, version: { $gt: Number(ver) } }).getDocuments();
-            if (doc) await Promise.all(doc.map(async document => {
+            var key;
+            let doc = await collection.find().filter({ versionId: _id, version: { $gt: Number(ver) } }).getDocuments();
+
+            if (doc) doc.map(async document => {
                 let tempDoc = document.getContent();
                 tempDoc.version = Number(tempDoc.version) - 1;
-                await collection.find().fetchArraySize(0).key(document.key).replaceOne(tempDoc);
-            }));
+                if (Number(tempDoc.version) === 0) {
+                    key = document.key;
+                }
+            });
+
+
+            if (key) {
+                if (doc) await Promise.all(doc.map(async document => {
+                    let tempDoc = document.getContent();
+                    tempDoc.versionId = key;
+                    tempDoc.version = Number(tempDoc.version) - 1;
+                    if (Number(tempDoc.version) === 0)
+                        tempDoc.isVersion = false;
+
+                    await collection.find().fetchArraySize(0).key(document.key).replaceOne(tempDoc);
+                }));
+            } else {
+                await Promise.all(doc.map(async document => {
+                    let tempDoc = document.getContent();
+                    tempDoc.version = Number(tempDoc.version) - 1;
+                    await collection.find().fetchArraySize(0).key(document.key).replaceOne(tempDoc);
+                }));
+            }
+
+            if (key)
+                return key;
+            else return false;
         } catch (e) {
             throw new Error(e.message);
         }

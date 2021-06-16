@@ -42,9 +42,10 @@ router.put('/register', JWT, async (req, res) => {
 
         let data = {
             name, org, postedby: _id, started: date,
+            time_due: new Date(date),
             day1: [], day2: [], date: new Date(Date.now()),
             day3: [], day4: [], day5: [], day6: [],
-            day7: [], created: Date.now(),
+            day7: [], created: Date.now()
         };
 
         let key = await createPlans(data, collectionPlan);
@@ -69,10 +70,11 @@ router.get('/fetchPlans', JWT, async (req, res) => {
         const collectionPlan = await soda.createCollection('plans');
 
         const { _id } = req.token;
-        const { limit } = req.query;
-        let p1 = getAllPlanLimit(_id, limit, collectionPlan);
-        let p2 = getAllPlanCount(_id, collectionPlan);
-        let [plans, count] = [await p1, await p2];
+        
+        const { limit, type, due } = req.query;
+
+        let plans = await getAllPlanLimit(_id, limit, type, due, collectionPlan);
+        let count = await getAllPlanCount(_id, type, due, collectionPlan);
 
         res.json({ planList: plans, count: count });
     } catch (e) {
@@ -94,10 +96,10 @@ router.get('/fetchPlansSearch', JWT, async (req, res) => {
         const collectionPlan = await soda.createCollection('plans');
 
         const { _id } = req.token;
-        const { limit, string } = req.query;
-        let p1 = getAllPlanQueryLimit(_id, limit, string, collectionPlan);
-        let p2 = getAllPlanQueryCount(_id, string, collectionPlan);
-        let [plans, count] = [await p1, await p2];
+        const { limit, string, type, due } = req.query;
+        
+        let plans = await getAllPlanQueryLimit(_id, limit, string, type, due, collectionPlan);
+        let count = await getAllPlanQueryCount(_id, string, type, due, collectionPlan);
 
         res.json({ planList: plans, count: count });
     } catch (e) {

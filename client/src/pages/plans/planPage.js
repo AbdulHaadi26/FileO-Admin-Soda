@@ -8,8 +8,12 @@ const PlanPage = ({ getPlan, profile, isErr, isSuc, plan, match, count }) => {
     const { id, _id, nId } = match.params, [tabNav, setTN] = useState(0), [started, setStarted] = useState(0);
 
     useEffect(() => {
-        getPlan(nId);
-        setStarted(1);
+        async function fetch() {
+            await getPlan(nId);
+            setStarted(1);
+        };
+
+        fetch();
     }, [getPlan, nId, setStarted]);
 
     const getList = () => {

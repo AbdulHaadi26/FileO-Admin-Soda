@@ -9,10 +9,13 @@ const ViewPage = ({ getFile, profile, isSuc, file, isErr, match, getDiscussion, 
     const { _id, id, pId } = match.params, [tabNav, setTN] = useState(0), [offset, setOF] = useState(12), [updated, setUpdated] = useState('');
 
     useEffect(() => {
-        var data = { _id: _id, pId: pId };
-        getFile(data);
-        getDiscussion({ _id: _id, offset: 0 }, 0);
-        setUpdated(new Date(Date.now()).toISOString());
+        async function fetch() {
+            let data = { _id: _id, pId: pId };
+            await getFile(data);
+            await getDiscussion({ _id: _id, offset: 0 }, 0);
+            setUpdated(new Date(Date.now()).toISOString());
+        };
+        fetch();
     }, [getFile, _id, pId, getDiscussion]);
 
     const getF = () => {
@@ -20,19 +23,21 @@ const ViewPage = ({ getFile, profile, isSuc, file, isErr, match, getDiscussion, 
         getFile(data);
     };
 
-    const udpateDiscussion = () => {
-        getDiscussion({ _id: _id, offset: Math.floor(offset / 12) }, 1);
+    const udpateDiscussion = async () => {
+        await getDiscussion({ _id: _id, offset: Math.floor(offset / 12) }, 1);
         setOF(offset + 12);
     };
 
-    const updateChat = () => {
-        getDiscussion({ _id: _id, offset: 0 }, 2);
+    const updateChat = async () => {
+        await getDiscussion({ _id: _id, offset: 0 }, 2);
         setUpdated(new Date(Date.now()).toISOString())
     };
 
     return <Container profile={profile} num={13} isErr={isErr} isSuc={isSuc && file} eT={'Project File Not Found'} isUpt={isUpt} percent={percent} onSubmit={getF}>
-        <ViewFile getF={getF} File={file} id={id} userId={profile.user._id} auth={profile.user.userType === 1} tabNav={tabNav} setTN={setTN} profile={profile && profile.user}
-            count={count} offset={offset} setOF={udpateDiscussion} updated={updated} updateChat={updateChat} discussion={discussion} />
+        <ViewFile File={file} id={id} userId={profile.user._id} auth={profile.user.userType === 1} tabNav={tabNav} setTN={setTN} profile={profile && profile.user}
+            count={count} offset={offset} setOF={udpateDiscussion} updated={updated} updateChat={updateChat} discussion={discussion}
+            disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled}
+        />
     </Container>
 }
 
@@ -49,4 +54,4 @@ const mapStateToProps = state => {
     }
 }
 
-export default connect(mapStateToProps, { getFile, getDiscussion })(ViewPage); 
+export default connect(mapStateToProps, { getFile, getDiscussion })(ViewPage);

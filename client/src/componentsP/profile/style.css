@@ -1,0 +1,47 @@
+.u-p-w{
+    margin-bottom: 30px;
+    margin-top: 20px;
+}
+
+.u-p-w .data .link{
+    cursor: pointer;
+    color: #2c3e50;
+    text-align:right;
+    width: 5%;
+}
+
+.u-p-w .data .dyna {
+    width:60%;
+    text-align: right;
+}
+
+.u-p-w .data .static{
+    width: 30%;
+    text-align: left;
+}
+
+.u-p-w .data .link:hover{
+    color: #636e72;
+}
+
+.u-p-w .data .user-profile{
+    width: 70px;
+    height: 70px;
+    border-radius: 1000px;
+}
+
+
+@media only screen and (max-width:992px) {
+    
+    .u-p-w .data .static {
+        width: 30%;
+    }
+
+    .u-p-w .data .dyna{
+        width:60%
+    }
+
+    .u-p-w .data .link{
+        width:10%;
+    }
+}

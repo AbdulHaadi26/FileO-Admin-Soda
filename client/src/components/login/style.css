@@ -1,35 +1,54 @@
-.l-w{
-    padding: 30px 10px 30px 10px !important;
+.l-w {
+    padding: 12px 10px 12px 10px !important;
     background-color: white;
-    border-radius: 12px;
-    border: 1px #d2dae2 solid;
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.al-f{
+    align-items: flex-start !important;
+}
+
+.login-row {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
 }
 
 input:focus, input:active:focus, input.active:focus, .btn:focus, .btn:active:focus, .btn.active:focus {
     outline: none;
     box-shadow: none !important;
     border-color: grey !important;
-  }
-  
+}
 
-.l-w .horz{
-    width: 90%;
+.l-w .horz {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
 }
 
-.l-w .sH{
-    margin: 24px 0px 12px 0px;
-    font-size: 20px;
-    font-weight: 400;
+.l-w .sH {
+    margin-top: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 8px;
 }
 
-.l-w .eT{
+.l-w .sH::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background-color: #509CFF;
+}
+
+.l-w .eT {
     margin-top: 16px;
     width: 89%;
     text-align: center;
@@ -38,41 +57,43 @@ input:focus, input:active:focus, input.active:focus, .btn:focus, .btn:active:foc
     font-size: 12px;
 }
 
-.l-w .btn{
-    width: 90%;
+.l-w .btn {
     margin: 20px 0 0 0;
+    background-color: #509CFF;
     color: white;
-    background-color:#2c3e50;
     outline: none;
-    box-shadow:none;  
+    box-shadow: none;
     border: 0px;
+    margin-right: auto;
+    margin-left: auto;
     font-weight: 700;
     letter-spacing: 2px;
+    border-radius: 40px;
+    padding: 6px 36px;
 }
 
-.l-w .btn:hover{
-   background-color: #34495e !important;
+.l-w .btn:hover {
+    background-color:#509CFF !important;
 }
 
-.l-w .btn:active, .l-w .btn:focus{
-     background-color: #2c3e50;
+.l-w .btn:active, .l-w .btn:focus {
+    background-color: #509CFF;
 }
 
 .l-w .logo {
-    width: 40px;
-    height: 40px;
-    margin-right: 12px;
+    width: 80px;
+    height: 80px;
 }
 
-.l-w .h{
+.l-w .h {
     margin-top: 8px;
     letter-spacing: 3px;
-    color:#2f3542;
+    color: #2f3542;
     font-weight: 700;
-    font-size: 24px;
+    font-size: 32px;
 }
 
-.l-w .l-o{
+.l-w .l-o {
     margin-top: 16px;
     width: 90%;
     display: flex;
@@ -81,21 +102,33 @@ input:focus, input:active:focus, input.active:focus, .btn:focus, .btn:active:foc
     align-items: center;
 }
 
-.l-w .l-o .form-check-label{
+.l-w .l-o .form-check-label {
     font-size: 14px;
     color: #2c3e50;
     font-weight: 600;
 }
 
-.l-w .r-l{
+.l-w .r-l {
     font-size: 14px;
-    color: #2c3e50;
+    color: #509CFF;
     font-weight: 600;
 }
 
-.l-w .r-t-l{
+.l-w .r-t-l {
     margin-top: 24px;
     font-size: 14px;
     color: #576574;
     font-weight: 400;
+    width: 100%;
+    text-align: center;
+}
+
+@media only screen and (max-width: 992px) {
+    .al-f {
+        align-items: center !important;
+    } 
+
+    .hidden{
+        display: none;
+    }
 }

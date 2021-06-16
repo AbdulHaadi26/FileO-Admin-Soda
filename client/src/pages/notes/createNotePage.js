@@ -5,7 +5,9 @@ const Main = lazy(() => import('../../components/notes/main'));
 
 const CreatePage = ({ profile, isL, match }) => {
     const { id, _id } = match.params, [tabNav, setTN] = useState(0);
-    return <Container profile={profile} isSuc={!isL} num={16}> <Main org={id} _id={_id} tabNav={tabNav} setTN={setTN} /> </Container>
+    return <Container profile={profile} isSuc={!isL} num={16}>
+        <Main profile={profile && profile.user && profile.user} org={id} _id={_id} tabNav={tabNav} setTN={setTN} />
+    </Container>
 }
 
 const mapStateToProps = state => {
@@ -13,6 +15,6 @@ const mapStateToProps = state => {
         profile: state.Profile.data,
         isL: state.Note.isL
     }
-}
+};
 
 export default connect(mapStateToProps)(CreatePage);

@@ -16,19 +16,22 @@ const ListPage = ({ match, profile, isL, isLA, isLT, fetchNotes, fetchTasks, fet
     useEffect(() => {
         setTN(Number(num));
         let data;
-        switch (Number(num)) {
-            case 1:
-                data = { _id: _id, offset: 0, status: 'All', type: 'Name', due: 'Due' };
-                fetchTasks(data);
-                break;
-            case 2:
-                fetchAttachment({ type: 'All' });
-                break;
-            default:
-                data = { limit: 0, _id: _id, type: 'All' };
-                fetchNotes(data);
-        }
-        setStarted(1);
+        async function fetch() {
+            switch (Number(num)) {
+                case 1:
+                    data = { _id: _id, offset: 0, status: 'All', type: 'Name', due: 'Due' };
+                    await fetchTasks(data);
+                    break;
+                case 2:
+                    await fetchAttachment({ type: 'All' });
+                    break;
+                default:
+                    data = { limit: 0, _id: _id, type: 'All' };
+                    await fetchNotes(data);
+            }
+            setStarted(1);
+        };
+        fetch();
     }, [num, _id, fetchTasks, fetchAttachment, fetchNotes]);
 
     const onhandleL = n => setL(n);
@@ -53,9 +56,10 @@ const ListPage = ({ match, profile, isL, isLA, isLT, fetchNotes, fetchTasks, fet
             handleTypeT={setTypeT} handleStatus={setSet} status={status} typeT={typeT} limitT={limitT}
             handleST={setST} stringT={stringT} due={due} handleDue={setDue} limitMultT={limitMultT}
             handleLT={onhandleLT} handleLMT={onhandleLMT} handleTypeN={onhandleTN} typeN={typeN}
+            disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled}
         />
     </Container>
-}
+};
 
 const mapStateToProps = state => {
     return {
@@ -64,6 +68,6 @@ const mapStateToProps = state => {
         isLA: state.File.isL,
         isLT: state.Task.isL
     }
-}
+};
 
 export default connect(mapStateToProps, { fetchNotes, fetchAttachment, fetchTasks })(ListPage);

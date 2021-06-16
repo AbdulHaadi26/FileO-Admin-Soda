@@ -33,6 +33,27 @@ module.exports = {
         }
     },
 
+    updateCatUptSParent: async (_id, collection, collectionShared) => {
+        try {
+            let doc = await collection.find().fetchArraySize(0).key(_id).getOne();
+            if (doc) {
+                let file = doc.getContent();
+                if (file.pCat && file.pCat[0]) {
+                    let cats = await collectionShared.find().filter({ catId: file.pCat[0] }).getDocuments();
+                    if (cats) {
+                        await Promise.all(cats.map(async cat => {
+                            let tempCat = cat.getContent();
+                            tempCat.updated = true;
+                            await collectionShared.find().fetchArraySize(0).key(cat.key).replaceOne(tempCat);
+                        }));    
+                    }
+                }
+            }
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
     updateCatUptSU: async (_id, fileId, value, collection) => {
         try {
             let doc = await collection.find().filter({ sharedWith: _id, catId: fileId }).getDocuments();

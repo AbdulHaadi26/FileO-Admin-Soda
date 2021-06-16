@@ -1,6 +1,6 @@
 import { organizationConstants } from '../constants';
-const { GOIErr, GOIReq, GOISuc, GPISuc } = organizationConstants;
-const iS = { isSuc: false, isErr: false, isL: false };
+const { GOIErr, GOIReq, GOISuc, GPISuc, GPBill } = organizationConstants;
+const iS = { isSuc: false, isErr: false, isL: false, bill: 0 };
 
 export const OrganizationReducer = (state = iS, action) => {
     switch (action.type) {
@@ -8,6 +8,7 @@ export const OrganizationReducer = (state = iS, action) => {
         case GOISuc: return { ...state, isL: false, isErr: false, isSuc: true, data: action.payload }
         case GOIErr: return { ...state, isL: false, isErr: true, isSuc: false }
         case GPISuc: return { ...state, packages: action.payload }
+        case GPBill: return {...state, bill: action.payload };
         default: return state;
     }
-}
+};

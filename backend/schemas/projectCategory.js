@@ -1,3 +1,5 @@
+const { getPresignedUrl } = require("../middlewares/oci-sdk");
+
 module.exports = {
     getAllCatsCount: async (_id, collection) => {
         try {
@@ -19,6 +21,43 @@ module.exports = {
                 cats.push(content);
             });
             return cats;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateCategory: async (key, parentCat, pCat, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+
+            let document = docToReplace.getContent();
+            document.parentCat = parentCat;
+            document.pCat = pCat;
+            document.isChild = parentCat ? true : false
+            document.assigned = [];
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateAllChildPCat: async (key, tempR, parentCat, collection) => {
+        try {
+            let doc = await collection.find().filter({ pCat: { $in: [key] } }).getDocuments();
+
+            if (doc) {
+                await Promise.all(doc.map(async docToReplace => {
+                    let document = docToReplace.getContent();
+                    let pCats = document.pCat ? document.pCat : [];
+                    pCats = pCats.filter(i => !tempR.includes(i))
+                    pCats = parentCat.concat(pCats);
+                    document.pCat = pCats;
+                    await collection.find().fetchArraySize(0).key(docToReplace.key).replaceOne(document);
+                }));
+            }
         } catch (e) {
             throw new Error(e.message);
         }
@@ -57,7 +96,9 @@ module.exports = {
 
     createCategory: async (data, collection) => {
         try {
-            await collection.insertOneAndGet(data);
+            let doc = await collection.insertOneAndGet(data);
+            if(doc) return doc.key;
+            return false;
         } catch (e) {
             throw new Error(e.message);
         }
@@ -125,10 +166,11 @@ module.exports = {
         }
     },
 
-    getAllCatLimitSP: async (_id, collection) => {
+    getAllCatLimitSP: async (_id, auth, uId, collection) => {
         try {
-            let cats = [];
-            const doc = await collection.find().filter({ pId: _id, isChild: { $ne: true } }).getDocuments();
+            let cats = [], doc;
+            if (auth === 'true') doc = await collection.find().filter({ pId: _id, isChild: { $ne: true } }).getDocuments();
+            else doc = await collection.find().filter({ pId: _id, ids: { $in: [uId] }, isChild: { $ne: true } }).getDocuments();
             if (doc) doc.map(document => {
                 let content = document.getContent();
                 content._id = document.key;
@@ -140,11 +182,56 @@ module.exports = {
         }
     },
 
-    getAllCatLimitSPM: async (_ids, collection) => {
+    
+    getCatByIdC: async (key, collection) => {
         try {
-            let cats = [];
+            const doc = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!doc) throw new Error('User Category with this name already exists');
+            let content = doc.getContent();
+            content._id = doc.key;
+
+            let tempCats = [];
+
+            if (content.pCat && content.pCat.length > 0) {
+                await Promise.all(content.pCat.map(async cat => {
+                    let tempDoc = await collection.find().fetchArraySize(0).key(cat).getOne();
+                    if (tempDoc) {
+                        let cat = tempDoc.getContent();
+                        cat._id = tempDoc.key;
+                        tempCats.push(cat);
+                    }
+                }));
+            }
+
+            content.pCat = tempCats;
+            return content;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getAllCatLimitSPF: async (_id, parentCat, catId, collection) => {
+        try {
+            let cats = [], doc = await collection.find().filter({ pId: _id, parentCat: parentCat }).getDocuments();
+            if (doc) doc.map(document => {
+                let content = document.getContent();
+                content._id = document.key;
+                content._id !== catId && cats.push(content);
+            });
+            return cats;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getAllCatLimitSPM: async (_ids, auth, _id, collection) => {
+        try {
+            let cats = [], doc;
             if (_ids && _ids.length > 0) {
-                const doc = await collection.find().filter({ pId: { $in: _ids }, isChild: { $ne: true } }).getDocuments();
+                if (auth === 'true')
+                    doc = await collection.find().filter({ pId: { $in: _ids }, isChild: { $ne: true } }).getDocuments();
+                else
+                    doc = await collection.find().filter({ pId: { $in: _ids }, ids: { $in: [_id] }, isChild: { $ne: true } }).getDocuments();
                 if (doc) doc.map(document => {
                     let content = document.getContent();
                     content._id = document.key;
@@ -244,10 +331,11 @@ module.exports = {
         }
     },
 
-    getAllQueryCatLimitSP: async (_id, string, collection) => {
+    getAllQueryCatLimitSP: async (_id, string, auth, uId, collection) => {
         try {
-            let cats = [];
-            const doc = await collection.find().filter({ pId: _id, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
+            let cats = [], doc;
+            if (auth === 'true') doc = await collection.find().filter({ pId: _id, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
+            else doc = await collection.find().filter({ pId: _id, ids: { $in: [uId] }, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
             if (doc) doc.map(document => {
                 let content = document.getContent();
                 content._id = document.key;
@@ -259,12 +347,17 @@ module.exports = {
         }
     },
 
-    getAllQueryCatLimitSPM: async (_ids, string, collection) => {
+    getAllQueryCatLimitSPM: async (_ids, string, auth, _id, collection) => {
         try {
-            let cats = [];
+            let cats = [], doc;
 
             if (_ids && _ids.length > 0) {
-                const doc = await collection.find().filter({ pId: { $in: _ids }, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
+                if (auth === 'true')
+                    doc = await collection.find().filter({ pId: { $in: _ids }, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
+                else
+                    doc = await collection.find().filter({ pId: { $in: _ids }, ids: { $in: [_id] }, isChild: { $ne: true }, name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }).getDocuments();
+
+
                 if (doc) doc.map(document => {
                     let content = document.getContent();
                     content._id = document.key;
@@ -309,6 +402,17 @@ module.exports = {
                 let doc = await collection.find().filter({ pId: { $in: pIds } }).getDocuments();
                 doc && doc.map(document => arr.push(document.key));
             }
+            return arr;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getAssignedUserCats: async (_id, collection) => {
+        try {
+            let arr = [];
+            let doc = await collection.find().filter({ ids: { $in: [_id] } }).getDocuments();
+            if (doc) doc.map(document => arr.push(document.key));
             return arr;
         } catch (e) {
             throw new Error(e.message);
@@ -374,4 +478,144 @@ module.exports = {
             throw new Error(e.message);
         }
     },
+
+    getAllCatUser: async (offsetN, _id, arrId, collection) => {
+        try {
+            let users = [];
+            let skipInNumber = Number(offsetN);
+            skipInNumber = skipInNumber * 12;
+            let doc = await collection.find().filter({ $query: { current_employer: _id, userType: { $lte: 2 }, email: { $in: arrId } }, $orderby: { created: -1 } })
+                .skip(skipInNumber).limit(12).getDocuments();
+
+            if (doc) await Promise.all(doc.map(async document => {
+                let tempDoc = document.getContent();
+                tempDoc._id = document.key;
+                await generateProfileUrl(tempDoc);
+                users.push(tempDoc);
+            }));
+
+            return users;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+
+    },
+
+    getAllCatUserSearch: async (offsetN, string, _id, arrId, collection) => {
+        try {
+            let users = [];
+            let skipInNumber = Number(offsetN);
+            skipInNumber = skipInNumber * 12;
+            let doc = await collection.find().filter({ $query: { current_employer: _id, userType: { $lte: 2 }, email: { $in: arrId }, $or: [{ name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }] }, $orderby: { created: -1 } })
+                .skip(skipInNumber).limit(12).getDocuments();
+
+            if (doc) await Promise.all(doc.map(async document => {
+                let tempDoc = document.getContent();
+                tempDoc._id = document.key;
+                await generateProfileUrl(tempDoc);
+                users.push(tempDoc);
+            }));
+
+            return users;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getAllCatUserSearchCount: async (string, _id, arrId, collection) => {
+        try {
+            let count = 0;
+            let doc = await collection.find().filter({
+                current_employer: _id, userType: { $lte: 2 },
+                email: { $in: arrId }, $or: [{ name: { $upper: { $regex: `.*${string.toUpperCase()}.*` } } }]
+            }).count();
+
+            if (doc) return doc.count;
+            return count;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    updateAssigned: async (key, _id, email, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+            let document = docToReplace.getContent();
+            let assigned = document.assigned ? document.assigned : [];
+            let ids = document.ids ? document.ids : [];
+            assigned.push(email);
+            ids.push(_id);
+            document.assigned = assigned;
+            document.ids = ids;
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+
+    updateAssignedAll: async (key, arr, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+            let document = docToReplace.getContent();
+            let assigned = document.assigned ? document.assigned : [];
+            let ids = document.ids ? document.ids : [];
+            arr.map(i => {
+                assigned.push(i.email);
+                ids.push(i._id);
+            });
+            document.assigned = assigned;
+            document.ids = ids;
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+
+    deleteAssigned: async (key, _id, email, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+            let document = docToReplace.getContent();
+            let assigned = document.assigned ? document.assigned : [];
+            let ids = document.ids ? document.ids : [];
+            assigned = assigned.filter(i => i !== email);
+            ids = ids.filter(i => i !== _id);
+            document.assigned = assigned;
+            document.ids = ids;
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    deleteAssignedAll: async (key, collection) => {
+        try {
+            let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
+            if (!docToReplace) return false;
+            let document = docToReplace.getContent();
+            document.assigned = [];
+            document.ids = [];
+            await collection.find().fetchArraySize(0).key(key).replaceOne(document);
+            document._id = docToReplace.key;
+            return document;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+}
+
+async function generateProfileUrl(user) {
+    var url = '';
+    if (user && user.image && user.bucketName) url = await getPresignedUrl(user._id, user.image, user.bucketName)
+    if (url) user.image = url;
 }

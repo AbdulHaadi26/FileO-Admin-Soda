@@ -18,7 +18,7 @@ const EmailVerify = ({ isL, sendPassMail, isSuc, isErr }) => {
         if (!form.email) return setForm({ ...form, err: true });
         let data = { email: form.email };
         sendPassMail(data);
-    }
+    };
 
     return <form className="col-12 p-0 em-h" onSubmit={e => handleSubmit(e)}>
         <div className="col-lg-4 col-10 em-sub">

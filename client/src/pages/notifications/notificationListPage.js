@@ -12,13 +12,17 @@ const ListPage = ({ match, profile, isL, fetchNotification, getNotifications, fe
 
     useEffect(() => {
         setTN(Number(num));
-        if (Number(num) === 0) {
-            fetchNotification({ limit: 0 });
-            getNotifications();
-        } else {
-            fetchRequests({ limit: 0 });
+
+        async function fetch() {
+            if (Number(num) === 0) {
+                await fetchNotification({ limit: 0 });
+                getNotifications();
+            } else {
+                await fetchRequests({ limit: 0 });
+            }
+            setStarted(1);
         }
-        setStarted(1);
+        fetch();
     }, [fetchNotification, getNotifications, fetchRequests, setStarted, num]);
 
     const onhandleL = n => setL(n);

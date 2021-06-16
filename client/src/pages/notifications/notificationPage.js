@@ -19,6 +19,6 @@ const mapStateToProps = state => {
         isSuc: state.Notification.isSuc,
         notification: state.Notification.data
     }
-}
+};
 
 export default connect(mapStateToProps, { getNotification })(NotificationPage);

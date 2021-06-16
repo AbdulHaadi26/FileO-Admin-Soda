@@ -9,31 +9,31 @@ const FileViewPage = ({ match, getFile, profile, isSuc, file, isErr, getDiscussi
     const { _id, id, uId, ver } = match.params, [tabNav, setTN] = useState(0), [offset, setOF] = useState(12), [updated, setUpdated] = useState('');
 
     useEffect(() => {
-        let data = { _id: _id, pId: uId };
-        getFile(data);
-        getDiscussion({ _id: _id, offset: 0 }, 0);
-        setUpdated(new Date(Date.now()).toISOString());
+        async function fetch() {
+            let data = { _id: _id, pId: uId };
+            await getFile(data);
+            await getDiscussion({ _id: _id, offset: 0 }, 0);
+            setUpdated(new Date(Date.now()).toISOString());
+        }
+
+        fetch();
     }, [getFile, _id, uId, getDiscussion]);
 
-    const getF = () => {
-        let data = { _id: _id, pId: uId };
-        getFile(data);
-    }
-
-    const udpateDiscussion = () => {
-        getDiscussion({ _id: _id, offset: Math.floor(offset / 12) }, 1);
+    const udpateDiscussion = async () => {
+        await getDiscussion({ _id: _id, offset: Math.floor(offset / 12) }, 1);
         setOF(offset + 12);
     };
 
-    const updateChat = () => {
-        getDiscussion({ _id: _id, offset: 0 }, 2);
+    const updateChat = async () => {
+        await getDiscussion({ _id: _id, offset: 0 }, 2);
         setUpdated(new Date(Date.now()).toISOString())
     };
 
-
     return <Container profile={profile} num={14} isErr={isErr} isSuc={isSuc && file} eT={'User File Not Found'}>
-        <ViewFile getF={getF} ver={Number(ver)} profile={profile && profile.user} File={file} id={id} uId={uId} tabNav={tabNav} setTN={setTN}
-            count={count} offset={offset} setOF={udpateDiscussion} updated={updated} updateChat={updateChat} discussion={discussion} />
+        <ViewFile ver={Number(ver)} profile={profile && profile.user} File={file} id={id} uId={uId} tabNav={tabNav} setTN={setTN}
+            count={count} offset={offset} setOF={udpateDiscussion} updated={updated} updateChat={updateChat} discussion={discussion}
+            disabled={profile && profile.user && profile.user.current_employer && profile.user.current_employer.isDisabled}
+        />
     </Container>
 }
 

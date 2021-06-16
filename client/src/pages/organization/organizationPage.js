@@ -10,8 +10,8 @@ const OrganizationPage = ({ getOrganization, isErr, isSuc, data, profile, isSucS
     useEffect(() => { getOrganization(); }, [getOrganization]);
 
     return <Container profile={profile} isSuc={isSuc && data && data.org} isErr={isErr} eT={'Organization Not Found'} num={3}>
-        {data && data.org && <Details Org={data.org} empCount={data.employeeCount} catCount={data.catCount} tabNav={tabNav} setTN={setTN}
-            roleCount={data.roleCount} setting={isSucS && setting && setting.setting ? setting.setting : ''} />} </Container>
+        {data && data.org && <Details Org={data.org} tabNav={tabNav} setTN={setTN}
+            setting={isSucS && setting && setting.setting ? setting.setting : ''} />} </Container>
 }
 
 const mapStateToProps = state => {
@@ -23,6 +23,6 @@ const mapStateToProps = state => {
         isSucS: state.setting.isSuc,
         setting: state.setting.data
     }
-}
+};
 
 export default connect(mapStateToProps, { getOrganization })(OrganizationPage);

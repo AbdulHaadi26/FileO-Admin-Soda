@@ -3,15 +3,22 @@ import { connect } from 'react-redux';
 import { fetchEmp, fetchEmpSearch } from '../../../redux/actions/employeeDTActions';
 import '../style.css';
 import Tabnav from '../../tabnav';
-const List = lazy(() => import('./item'));
-const mT = { marginTop: '16px', marginLeft: '12px' };
-const sT = { display: 'flex', justifyContent: 'flex-end' };
-const ListUser = ({ 
-    fetchEmp, fetchEmpSearch, id, empData, isSuc, string, offsetMult, limit, 
-    limitMult, handleS, handleL, handleLM, handleOFM, handleT, type, tabNav, setTN
- }) => {
+import GTrans from '../../../assets/tabnav/G-transfer from.svg';
+import BTrans from '../../../assets/tabnav/B-transfer from.svg';
+import Searchbar from '../../searchbarReusable';
 
-    const onhandleInput = e => handleS(e.target.value);
+
+const List = lazy(() => import('./item'));
+
+let icons = [
+    { G: GTrans, B: BTrans }
+];
+
+
+const ListUser = ({
+    fetchEmp, fetchEmpSearch, id, empData, isSuc, string, offsetMult, limit,
+    limitMult, handleS, handleL, handleLM, handleOFM, handleT, type, tabNav, setTN
+}) => {
 
     const handleSearch = e => {
         e.preventDefault();
@@ -44,21 +51,22 @@ const ListUser = ({
     }
 
     return <div className="col-11 e-w p-0">
-        <h4 className="h">Storage Transfer</h4>
-        <Tabnav items={['Users']} i={tabNav} setI={setTN} />
-        <div style={sT}>
-            <select className="form-control col-lg-2 col-4" value={type} onChange={e => handleSelect(e)} style={mT}>
-                <option data-key={'Name'}>Name</option>
-                <option data-key={'Email'}>Email</option>
-            </select>
-            <div className="input-group input-search" style={mT}>
-                <input type="text" className="form-control" placeholder="Enter string" value={string} onChange={e => onhandleInput(e)} onKeyPress={e => e.key === 'Enter' && handleSearch(e)} />
-                <div className="input-group-append">
-                    <button className="btn btn-outline-secondary" type="button" onClick={e => handleSearch(e)} ><div className="faH" /></button>
-                </div>
-            </div>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            <h4 className="h">Storage Transfer</h4>
+            <div style={{ marginLeft: 'auto' }} />
+            <Searchbar isCreate={false} classN={false ? `col-lg-7 col-12` : 'col-lg-5 col-12'} pad={false} value={string}
+                handleSearch={e => handleSearch(e)} onHandleInput={val => handleS(val)} holder={type === 'Name' ? 'Enter name' : 'Enter email'} comp={<>
+                    <div style={{ height: '30px', margin: 'auto 2px', width: '2px', backgroundColor: '#f9f9f9' }}></div>
+                    <select className="custom-select col-3" onChange={e => handleSelect(e)} value={type}>
+                        <option data-key={'Name'}>Name</option>
+                        <option data-key={'Email'}>Email</option>
+                    </select>
+                </>} />
         </div>
-        {isSuc && list.length > 0 && count > 0 ? <Suspense fallback={<></>}> <List list={list} count={count} id={id} onFetch={fetch} /> </Suspense> : <div width="100%"> <h6 className="e-n" width="100%" style={{ textAlign: 'center', marginTop: '50px' }}>No user found</h6> </div>}
+        <Tabnav items={['Transfer From']} i={tabNav} setI={setTN} icons={icons} />
+        {isSuc && list.length > 0 && count > 0 ? <Suspense fallback={<></>}>
+            <List list={list} count={count} id={id} onFetch={fetch} />
+        </Suspense> : <div width="100%"> <h6 className="e-n" width="100%" style={{ textAlign: 'center', marginTop: '50px' }}>No user found</h6> </div>}
     </div>
 }
 

@@ -1,10 +1,10 @@
-import { notifConstants, userConstants } from "../constants";
+import { notifConstants } from "../constants";
 import api from '../../utils/api';
 import history from '../../utils/history';
 import Token from './token';
 import { ModalProcess } from "./profileActions";
+import { logOut } from "./userActions";
 const { CNValue, NErr, NReq, NSuc, GNSuc, NLSuc } = notifConstants;
-const { GPErr } = userConstants;
 
 const notifList = { data: [], count: 0 };
 
@@ -20,7 +20,10 @@ export const fetchNotification = data => async dispatch => {
             dispatch({ type: NLSuc, payload: notifList });
             dispatch({ type: NSuc });
         } else dispatch({ type: NErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchRequests = data => async dispatch => {
@@ -34,7 +37,10 @@ export const fetchRequests = data => async dispatch => {
             dispatch({ type: NLSuc, payload: notifList });
             dispatch({ type: NSuc });
         } else dispatch({ type: NErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const removeRequest = data => async dispatch => {
@@ -48,7 +54,10 @@ export const removeRequest = data => async dispatch => {
             dispatch({ type: NLSuc, payload: notifList });
             dispatch({ type: NSuc });
         } else dispatch({ type: NErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const getNotification = _id => async dispatch => {
@@ -62,7 +71,10 @@ export const getNotification = _id => async dispatch => {
         } else dispatch({ type: NErr });
 
         !res.data.error && dispatch({ type: CNValue, payload: res.data.count });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const deleteNotification = (_id, org) => async dispatch => {
@@ -72,9 +84,12 @@ export const deleteNotification = (_id, org) => async dispatch => {
         var data = { _id: _id };
         await api.post(`/notifications/delete`, data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         dispatch(ModalProcess({ title: 'Notification', text: 'Notification has been deleted.' }));
-        history.push(`/organization/${org}/notification/list`);
-    } catch { dispatch({ type: GPErr }); }
-}
+        history.push(`/organization/${org}/notification/list/page/0`);
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+};
 
 export const deleteAllNotification = org => async dispatch => {
     try {
@@ -89,7 +104,10 @@ export const deleteAllNotification = org => async dispatch => {
             dispatch({ type: NLSuc, payload: notifList });
             dispatch({ type: NSuc });
         } else dispatch({ type: NErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const readAllNotification = () => async dispatch => {
@@ -105,5 +123,8 @@ export const readAllNotification = () => async dispatch => {
             dispatch({ type: NLSuc, payload: notifList });
             dispatch({ type: NSuc });
         } else dispatch({ type: NErr });
-    } catch { dispatch({ type: GPErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }

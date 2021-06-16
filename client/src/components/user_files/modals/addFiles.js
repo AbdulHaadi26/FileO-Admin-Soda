@@ -22,6 +22,7 @@ const Add = ({ catId, setting, registerFileM, id, _id, onhandleModal }) => {
     const handleSubmit = e => {
         e.preventDefault();
         if (arr && arr.length > 0 && fl.length > 0) {
+            onhandleModal();
             registerFileM(arr, fl);
         } else {
             arr.length <= 0 && setErrE(true);
@@ -80,7 +81,6 @@ const Add = ({ catId, setting, registerFileM, id, _id, onhandleModal }) => {
                 onhandleModal();
             }}>Cancel</button>
             <button className="btn btn-primary" type="button" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
-                onhandleModal();
                 handleSubmit(e);
             }}>Upload</button>
         </div>

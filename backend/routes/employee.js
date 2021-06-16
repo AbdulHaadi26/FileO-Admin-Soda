@@ -31,10 +31,6 @@ const {
 } = require('../schemas/organization');
 
 const {
-    getAllRoles
-} = require('../schemas/role');
-
-const {
     getProfile,
     getAllUserCount,
     getAllUserLimit,
@@ -44,7 +40,6 @@ const {
     updateValue,
     findUserById,
     deleteUser,
-    getUserByRoles
 } = require('../schemas/user');
 
 const {
@@ -63,8 +58,9 @@ const {
     getSetting
 } = require('../schemas/setting');
 const { removeEmpReq } = require('../schemas/empReq');
-const { userRolesChanged } = require('../schemas/notification');
 const { deletePlanUser } = require('../schemas/plans');
+const { deleteDPlanUser } = require('../schemas/dailyPlan');
+const { removeDescUser } = require('../schemas/description');
 
 router.get('/getEmployee', JWT, async (req, res) => {
     var connection;
@@ -74,21 +70,15 @@ router.get('/getEmployee', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionRoles, collectionCats] = [
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('roles'),
-            await soda.createCollection('cats'),
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
 
-        const { _id, org } = req.query;
-        const p1 = getProfile(_id, collectionUser, collectionOrg, collectionRoles, collectionCats);
-        const p2 = getAllRoles(org, collectionRoles);
-        var [user, roleList] = [await p1, await p2];
+        const { _id } = req.query;
+        let user = await getProfile(_id, collectionUser, collectionOrg);
+
         if (!user) throw new Error('Could not find employee');
 
-        if (!roleList) roleList = [];
-        res.json({ user: user, roleList: roleList });
+        res.json({ user: user });
     } catch (e) {
         console.log(e);
         res.json({ error: e.meesage });
@@ -108,10 +98,10 @@ router.get('/getEmployeeCount', JWT, async (req, res) => {
         const collectionUser = await soda.createCollection('users');
 
         const { _id } = req.query;
-        let count = await getAllUserCount(_id, collectionUser);
-        if (count) return res.json({ userCount: count });
 
-        res.json({ userCount: 0 });
+        let count = await getAllUserCount(_id, collectionUser);
+
+        return res.json({ userCount: count });
     } catch (e) {
         console.log(e);
         res.json({ error: e.meesage });
@@ -191,10 +181,9 @@ router.post('/updateProfile', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionRoles, collectionCats, collectionEmpReq] = [
-            await soda.createCollection('users'), await soda.createCollection('orgs'), await soda.createCollection('roles'),
-            await soda.createCollection('cats'), await soda.createCollection('emp_reqs')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionEmpReq = await soda.createCollection('emp_reqs');
 
         const { _id, field, value } = req.body;
 
@@ -203,19 +192,16 @@ router.post('/updateProfile', JWT, async (req, res) => {
         if (field === 'email') {
             let userE = await findUserByEmail(value, collectionUser);
             if (userE) {
-                let userTemp = await getProfile(_id, collectionUser, collectionOrg, collectionRoles, collectionCats);
+                let userTemp = await getProfile(_id, collectionUser, collectionOrg);
                 res.json({ user: userTemp });
             }
         }
 
-        const [user, roleList] = [
-            await updateValue(_id, field, value, collectionUser, collectionOrg, collectionRoles, collectionCats),
-            await getAllRoles(req.token.org, collectionRoles)
-        ];
+        let user = await updateValue(_id, field, value, collectionUser, collectionOrg);
 
         if (!user) throw new Error('User profile not found');
 
-        res.json({ user: user, roleList: roleList });
+        res.json({ user: user });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -223,51 +209,6 @@ router.post('/updateProfile', JWT, async (req, res) => {
         await closeConnection(connection);
     }
 });
-
-router.post('/updateRoleId', JWT, async (req, res) => {
-    var connection;
-    try {
-        connection = await getConnection();
-        if (!connection) throw new Error('Connection has not been intialized yet.');
-        const soda = await getSodaDatabase(connection);
-        if (!soda) throw new Error('Soda database has not been intialized yet.');
-
-        const { ids, _id, org } = req.body;
-
-        const [collectionUser, collectionOrg, collectionRoles, collectionCats, collectionNotifs] = [
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('roles'),
-            await soda.createCollection('cats'),
-            await soda.createCollection('notifs')
-        ];
-
-        let userIds = await getUserByRoles(org, ids, collectionUser);
-        await userRolesChanged(userIds, 0, collectionNotifs);
-        const [user, roleList] = [await updateValue(_id, 'roles', ids, collectionUser, collectionOrg, collectionRoles, collectionCats), await getAllRoles(org, collectionRoles)];
-
-        if (!user) throw new Error('Could not find employee');
-
-        res.json({ user: user, roleList: roleList });
-    } catch (e) {
-        console.log(e);
-        res.json({ error: e.message });
-    } finally {
-        await closeConnection(connection);
-    }
-});
-
-async function deleteFile(file, bucketName) {
-    uploaded_data = uploaded_data - Number(file.size);
-    available = available + Number(file.size);
-    if (uploaded_data < 0) uploaded_data = 0;
-    if (available > combined_plan) available = Number(combined_plan);
-    percent_used = (((Number(combined_plan - available)) * 100) % (Number(combined_plan)));
-    if (percent_used > 100) percent_left = 100;
-    percent_left = 100 - Number(percent_used);
-    if (percent_left < 0) percent_left = 0;
-    await deleteObject(file.url, bucketName);
-}
 
 router.post('/deleteUser/:_id', JWT, async (req, res) => {
     var connection;
@@ -277,29 +218,37 @@ router.post('/deleteUser/:_id', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionUserFile,
-            collectionProjects, collectionRecs, collectionClient,
-            collectionUserCat, collectionProjF, collectionSes,
-            collectionRecfs, collectionsURecfs, collectionPRecfs,
-            collectionNotifs, collectionNote, collectionSharedF,
-            collectionClientC, collectionSharedN, collectionProjA, collectionEmpReq, collectionPlan] = [
-                await soda.createCollection('users'), await soda.createCollection('orgs'), await soda.createCollection('user_files'),
-                await soda.createCollection('projs'), await soda.createCollection('recrs'), await soda.createCollection('client_files'),
-                await soda.createCollection('user_cats'), await soda.createCollection('proj_files'), await soda.createCollection('sessions'),
-                await soda.createCollection('recfs'), await soda.createCollection('urecfs'), await soda.createCollection('precfs'),
-                await soda.createCollection('notifs'), await soda.createCollection('notes'), await soda.createCollection('shared_files'),
-                await soda.createCollection('client_cats'), await soda.createCollection('shared_notes'), await soda.createCollection('proj_assigned'),
-                await soda.createCollection('emp_reqs'), await soda.createCollection('plans')
-            ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionUserFile = await soda.createCollection('user_files');
+        const collectionProjects = await soda.createCollection('projs');
+        const collectionRecs = await soda.createCollection('recrs');
+        const collectionClient = await soda.createCollection('client_files');
+        const collectionUserCat = await soda.createCollection('user_cats');
+        const collectionProjF = await soda.createCollection('proj_files');
+        const collectionSes = await soda.createCollection('sessions');
+        const collectionRecfs = await soda.createCollection('recfs');
+        const collectionsURecfs = await soda.createCollection('urecfs');
+        const collectionPRecfs = await soda.createCollection('precfs');
+        const collectionNotifs = await soda.createCollection('notifs');
+        const collectionNote = await soda.createCollection('notes');
+        const collectionSharedF = await soda.createCollection('shared_files');
+        const collectionClientC = await soda.createCollection('client_cats');
+        const collectionSharedN = await soda.createCollection('shrs_note');
+        const collectionProjA = await soda.createCollection('proj_assigned');
+        const collectionEmpReq = await soda.createCollection('emp_reqs');
+        const collectionPlan = await soda.createCollection('plans');
+        const collectionDPlan = await soda.createCollection('daily_plans');
+        const collectionDesc = await soda.createCollection('note_desc');
 
         const { _id } = req.params;
 
-        var p1 = findUserById(_id, collectionUser);
-        var p2 = UserFile.deleteFilesUser(_id, collectionUserFile);
-        var p3 = getAllProjectsOfUser(_id, collectionProjects);
-        var p4 = Recs.getAllRecFilesOfUser(_id, collectionRecs);
-        var p5 = ClientF.getAllClientFilesOfUser(_id, collectionClient);
-        var [user, ufile, pIds, recs, clients] = [await p1, await p2, await p3, await p4, await p5];
+        let user = await findUserById(_id, collectionUser);
+        let ufile = await UserFile.deleteFilesUser(_id, collectionUserFile);
+        let pIds = await getAllProjectsOfUser(_id, collectionProjects);
+        let recs = await Recs.getAllRecFilesOfUser(_id, collectionRecs);
+        let clients = await ClientF.getAllClientFilesOfUser(_id, collectionClient);
+
         if (!user) throw new Error('User not found')
 
         let mydate = new Date();
@@ -308,20 +257,65 @@ router.post('/deleteUser/:_id', JWT, async (req, res) => {
         let sql = `UPDATE user_billing SET end_date='${str}' WHERE userId='${_id}'`;
         await connection.execute(sql);
 
-        var p4 = getMultipleFilesPid(pIds, collectionProjF);
-        var p5 = findOrganizationByIdUpt(user.current_employer, collectionOrg);
-        var [files, organ] = [await p4, await p5];
+        let files = await getMultipleFilesPid(pIds, collectionProjF);
+        let organ = await findOrganizationByIdUpt(user.current_employer, collectionOrg);
+
+        var combined_plan = Number(organ.combined_plan);
         var uploaded_data = organ && organ.data_uploaded ? Number(organ.data_uploaded) : 0;
         var available = Number(organ.available);
         var percent_left, percent_used;
 
         if (user.image) await deleteObject(user.image, req.token.bucket, () => { });
 
-        if (ufile && ufile.length > 0) await Promise.all(ufile.map(async file => deleteFile(file, req.token.bucket)));
-        if (recs && recs.length > 0) await Promise.all(recs.map(async file => deleteFile(file, req.token.bucket)));
-        if (clients && clients.length > 0) await Promise.all(clients.map(async file => deleteFile(file, req.token.bucket)));
-        if (files && files.length > 0) await Promise.all(files.map(async file => deleteFile(file, req.token.bucket)));
-        if (percent_left && percent_used) await updatePackageDetails(organ._id, uploaded_data, available, percent_left, percent_used, collectionOrg);
+        if (ufile && ufile.length > 0) await Promise.all(ufile.map(async file => {
+            uploaded_data = uploaded_data - Number(file.size);
+            available = available + Number(file.size);
+            if (uploaded_data < 0) uploaded_data = 0;
+            if (available > combined_plan) available = Number(combined_plan);
+            percent_used = (((Number(combined_plan - available)) * 100) % (Number(combined_plan)));
+            if (percent_used > 100) percent_left = 100;
+            percent_left = 100 - Number(percent_used);
+            if (percent_left < 0) percent_left = 0;
+            await deleteObject(file.url, req.token.bucket);
+        }));
+
+        if (recs && recs.length > 0) await Promise.all(recs.map(async file => {
+            uploaded_data = uploaded_data - Number(file.size);
+            available = available + Number(file.size);
+            if (uploaded_data < 0) uploaded_data = 0;
+            if (available > combined_plan) available = Number(combined_plan);
+            percent_used = (((Number(combined_plan - available)) * 100) % (Number(combined_plan)));
+            if (percent_used > 100) percent_left = 100;
+            percent_left = 100 - Number(percent_used);
+            if (percent_left < 0) percent_left = 0;
+            await deleteObject(file.url, req.token.bucket);
+        }));
+
+        if (clients && clients.length > 0) await Promise.all(clients.map(async file => {
+            uploaded_data = uploaded_data - Number(file.size);
+            available = available + Number(file.size);
+            if (uploaded_data < 0) uploaded_data = 0;
+            if (available > combined_plan) available = Number(combined_plan);
+            percent_used = (((Number(combined_plan - available)) * 100) % (Number(combined_plan)));
+            if (percent_used > 100) percent_left = 100;
+            percent_left = 100 - Number(percent_used);
+            if (percent_left < 0) percent_left = 0;
+            await deleteObject(file.url, req.token.bucket);
+        }));
+
+        if (files && files.length > 0) await Promise.all(files.map(async file => {
+            uploaded_data = uploaded_data - Number(file.size);
+            available = available + Number(file.size);
+            if (uploaded_data < 0) uploaded_data = 0;
+            if (available > combined_plan) available = Number(combined_plan);
+            percent_used = (((Number(combined_plan - available)) * 100) % (Number(combined_plan)));
+            if (percent_used > 100) percent_left = 100;
+            percent_left = 100 - Number(percent_used);
+            if (percent_left < 0) percent_left = 0;
+            await deleteObject(file.url, req.token.bucket);
+        }));
+
+        await updatePackageDetails(organ._id, uploaded_data, available, percent_left, percent_used, collectionOrg);
 
         await UserCat.deleteAllByUser(_id, collectionUserCat);
         await ProjF.deleteMultipleFilesPid(pIds, collectionProjF);
@@ -342,6 +336,8 @@ router.post('/deleteUser/:_id', JWT, async (req, res) => {
         await removeEmpReq(_id, collectionEmpReq);
         await deletePlanUser(_id, collectionPlan);
         await deleteUser(_id, collectionUser);
+        await deleteDPlanUser(_id, collectionDPlan);
+        await removeDescUser(_id, collectionDesc);
 
         res.json({ success: 'User deleted' });
     } catch (e) {
@@ -361,16 +357,16 @@ router.post('/imageUrl/sign', JWT, async (req, res) => {
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
         const { id, org, image, mimeType, fileSize } = req.body;
-        var size = 1;
+        let size = 1;
 
         const collection = await soda.createCollection('sets');
         const set = await getSetting(collection);
 
         if (set && set.maxImageSize) size = Number(set.maxImageSize);
         if (!validateMime(mimeType, size, fileSize)) throw new Error('Image type not supported');
-        const fileName = `${uuidv4()}${image.toLowerCase().split(' ').join('-')}`;
-        const key = generateFileName(fileName, org, id);
-        const url = await putPresignedUrl(id, key, req.token.bucket);
+        const fileName = `${image.toLowerCase().split(' ').join('-')}`;
+        let key = generateFileName(fileName, org, id);
+        let url = await putPresignedUrl(id, key, req.token.bucket);
 
         if (url) res.json({ url: url, key: key });
         else throw new Error('Could not upload user image');
@@ -392,22 +388,18 @@ router.post('/uploadImage', JWT, async (req, res) => {
 
         const { _id, key } = req.body;
 
-        const [collectionUser, collectionOrg, collectionRoles, collectionCats] = [
-            await soda.createCollection('users'),
-            await soda.createCollection('orgs'),
-            await soda.createCollection('roles'),
-            await soda.createCollection('cats'),
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
 
-        var userT = await findUserById(_id, collectionUser);
+        let userT = await findUserById(_id, collectionUser);
         if (!userT) throw new Error('User profile not found');
 
         if (userT.image) await deleteObject(userT.image, req.token.bucket);
 
-        const [user, roleList] = [await updateValue(_id, 'image', key, collectionUser, collectionOrg, collectionRoles, collectionCats), await getAllRoles(req.token.org, collectionRoles)];
+        let user = await updateValue(_id, 'image', key, collectionUser, collectionOrg);
 
         if (!user) throw new Error('Could not find employee');
-        res.json({ user: user, roleList: roleList });
+        res.json({ user: user });
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -421,7 +413,7 @@ function validateMime(type, size, expectedSize) {
 }
 
 function generateFileName(fileName, id, _id) {
-    return `FileO/organization/${id}/images/user/${_id}/${fileName}`;
+    return `FileO/organization/${id}/images/user/${_id}/${uuidv4()}/${fileName}`;
 }
 
 module.exports = router;

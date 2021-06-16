@@ -6,20 +6,23 @@ const tS = { width: '100%', textAlign: 'left' };
 const mS = { marginTop: '12px', marginLeft: '6px' };
 
 export default ({ onhandleModal, onhandleAdd }) => {
-    const [text, setText] = useState(''), [description, setDescription] = useState(''),[cbActive, setCB] = useState(false), [icon, setIcon] = useState(0);
+    const [text, setText] = useState(''), [description, setDescription] = useState(''), [cbActive, setCB] = useState(false), [icon, setIcon] = useState(0);
 
     const onhandleInputA = e => e.target.value.split(' ').length <= 500 && setDescription(e.target.value);
     function handleCB(e) { setCB(e.target.checked); }
 
     return <Modal handleModal={onhandleModal} isOpt={true}>
-        <form onSubmit={e => text && onhandleAdd(text, description, cbActive, icon)}>
+        <form onSubmit={e => {
+            e.preventDefault();
+            text && onhandleAdd(text, description, cbActive, icon)
+        }}>
             <h3 style={{ fontWeight: '600', fontSize: '18px', marginTop: '12px', marginBottom: '12px', padding: '6px 12px' }}>New Project</h3>
             <hr />
             <div className="col-12" style={{ padding: '6px 12px' }}>
                 <Icons i={icon} setI={setIcon} />
                 <div className="input-group" style={iG}>
                     <input type={'text'} className="form-control" placeholder={'Project name'} value={text}
-                        onChange={e => setText(e.target.value)} required={true} />
+                        onChange={e => setText(e.target.value)} required={true} autoFocus={true} />
                 </div>
                 <div className="input-group" style={{ width: '100%', marginTop: '12px' }}>
                     <textarea type='text' className="form-control" placeholder={'Project description'} value={description} onChange={e => onhandleInputA(e)} style={tS} />
@@ -37,9 +40,7 @@ export default ({ onhandleModal, onhandleAdd }) => {
                 <button className="btn btn-danger" type="button" style={{ fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
                     onhandleModal();
                 }}>Cancel</button>
-                <button className="btn btn-primary" type="submit" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
-                    text && onhandleAdd(text, description, cbActive, icon);
-                }}>Save</button>
+                <button className="btn btn-primary" type="submit" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }}>Save</button>
             </div>
         </form>
     </Modal>

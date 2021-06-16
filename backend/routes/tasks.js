@@ -21,9 +21,12 @@ const {
     updateNoteUpt,
     getAllUptNoteCount,
     findNoteByName,
-    createTask
+    createTask,
+    findNoteById,
+    updateNoteN
 } = require('../schemas/task');
-const { fileChanged } = require('../schemas/notification');
+
+const { fileChanged, createNotification } = require('../schemas/notification');
 const { findOrganizationByIdUpt, updatePackageDetails } = require('../schemas/organization');
 
 const {
@@ -34,11 +37,13 @@ const {
 } = require('../schemas/recordings');
 
 const {
-    deleteSharedNote, updateSharedNoteName, updateNoteUptS
+    deleteSharedNote, updateSharedNoteName, updateNoteUptS, createSharedN, deleteAssigned
 } = require('../schemas/sharedTask');
 
 const { findUserById, updateStorage } = require('../schemas/user');
 const { deleteDiscussions } = require('../schemas/discussion');
+const { createDesc, removeDesc, updateDescription, getDescById } = require('../schemas/description');
+const { findNoteByNameEQ } = require('../schemas/note');
 
 router.put('/register', JWT, async (req, res) => {
     var connection;
@@ -48,29 +53,39 @@ router.put('/register', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionNotes, collectionRecs] = [
-            await soda.createCollection('notes'), await soda.createCollection('recrs')
-        ];
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionRecs = await soda.createCollection('recrs');
+
+        const collectionDesc = await soda.createCollection('note_desc');
 
         const {
-            name, org, _id, title, editable, due, status,
-            text, color, fileList, recId, catList
+            org, title, editable, due, status, text, color, fileList, recId, catList, icon
         } = req.body;
 
-        const noteData = {
-            title: title, org: org, text: text, postedby: req.token._id,
+        let noteData = {
+            title: title, org: org, text: '', postedby: req.token._id,
             color: color, attachment: fileList, recId: recId, editable,
             catList: catList, updated: false, isTask: true,
             created: Date.now(), date: new Date(), due, status, time_due: new Date(due),
+            icon: icon
         };
 
-        let note = await findNoteByName(name, _id, false, collectionNotes);
+        let note = await findNoteByName(title, req.token._id, true, collectionNotes);
 
         if (!note) {
-            await createTask(noteData, collectionNotes);
+            let descData = {
+                postedby: req.token._id, org: org, text: text
+            };
+
+            let keyD = await createDesc(descData, collectionDesc);
+
+            noteData.text = keyD;
+
+            let key = await createTask(noteData, collectionNotes);
 
             if (recId) await updateRecName(recId, title, collectionRecs);
-            res.json({ note: noteData });
+
+            res.json({ note: key });
         } else throw new Error('Note already exists');
     } catch (e) {
         console.log(e);
@@ -80,6 +95,78 @@ router.put('/register', JWT, async (req, res) => {
     }
 });
 
+
+router.post('/transfer', JWT, async (req, res) => {
+    var connection;
+    try {
+        connection = await getConnection();
+        if (!connection) throw new Error('Connection has not been intialized yet.');
+        const soda = await getSodaDatabase(connection);
+        if (!soda) throw new Error('Soda database has not been intialized yet.');
+
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionUser = await soda.createCollection('users');
+        const collectionSharedN = await soda.createCollection('shrs_note');
+        const collectionNotif = await soda.createCollection('notifs');
+
+        const { userId, noteId } = req.body;
+
+        let user = await findUserById(req.token._id, collectionUser);
+
+        let note = await updateNoteN(noteId, userId, collectionNotes);
+
+        if (!note) throw new Error('Note could not be transfered');
+
+        await deleteAssigned(userId, noteId, collectionSharedN);
+
+        note = await findNoteByIdP(noteId, collectionNotes, collectionUser);
+
+        if (!note) throw new Error('Note not found');
+
+        let sharedData = {
+            sharedWName: user.name, sharedWith: req.token._id, sharedBy: note.postedby._id, created: Date.now(), date: new Date(),
+            sharedByName: note.postedby.name, noteId: noteId, noteTitle: note.title, org: note.org, updated: true,
+            isTask: true, time_due: note.time_due, status: note.status, due: note.due
+        };
+
+        await createSharedN(sharedData, collectionSharedN);
+
+        let date = parseDate();
+        let title = `${note.postedby.name} has shared a task with you.`, message = `A new task ${note.title} has been shared by ${note.postedby.name} with you on ${date} in File-O.`;
+        await generateNotification(note.org, note.postedby._id, title, message, 4, 1, note._id, date, '', req.token._id, collectionNotif);
+
+
+        res.json({ success: true });
+    } catch (e) {
+        console.log(e);
+        res.json({ error: e.message });
+    } finally {
+        await closeConnection(connection);
+    }
+});
+
+
+async function generateNotification(org, pBy, title, message, t, uT, fileId, dt, mime, sWT, collectionNotif) {
+    let data = {
+        postedBy: pBy, title: title, message: message, recievedBy: sWT, type: t, isRead: false,
+        userType: uT, org: org, id: fileId, date: dt, mimeType: mime, created: Date.now()
+    };
+    await createNotification(data, collectionNotif);
+}
+
+
+function parseDate() {
+    var serverDate = new Date(Date.now());
+    var dt = new Date(Date.parse(serverDate));
+    var hours = dt.getHours();
+    var minutes = dt.getMinutes();
+    var ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    var strTime = `${`${serverDate.toString().slice(0, 10)} at `}${hours}:${minutes} ${ampm}`;
+    return strTime;
+}
 
 router.get('/fetchNotes', JWT, async (req, res) => {
     var connection;
@@ -92,9 +179,8 @@ router.get('/fetchNotes', JWT, async (req, res) => {
         const collectionNotes = await soda.createCollection('notes');
 
         const { _id, offset, type, status, due } = req.query;
-        var p1 = getAllNoteLimit(_id, offset, true, type, status, due, collectionNotes);
-        var p2 = getAllNoteCount(_id, true, type, status, due, collectionNotes);
-        var [notes, count] = [await p1, await p2];
+        let notes = await getAllNoteLimit(_id, offset, true, type, status, due, collectionNotes);
+        let count = await getAllNoteCount(_id, true, type, status, due, collectionNotes);
 
         res.json({ noteList: notes, count: count });
     } catch (e) {
@@ -116,9 +202,8 @@ router.get('/fetchNotesSearch', JWT, async (req, res) => {
         const collectionNotes = await soda.createCollection('notes');
 
         const { _id, offset, string, type, status, due } = req.query;
-        var p1 = getAllNoteQueryLimit(_id, offset, string, true, type, status, due, collectionNotes);
-        var p2 = getAllNoteQueryCount(_id, string, true, type, status, due, collectionNotes);
-        var [notes, count] = [await p1, await p2];
+        let notes = await getAllNoteQueryLimit(_id, offset, string, true, type, status, due, collectionNotes);
+        let count = await getAllNoteQueryCount(_id, string, true, type, status, due, collectionNotes);
 
         res.json({ noteList: notes, count: count });
     } catch (e) {
@@ -141,6 +226,7 @@ router.get('/updateNoteCount', JWT, async (req, res) => {
 
         let count = await getAllUptNoteCount(req.token._id, true, collectionNotes);
         res.json({ noteCount: count });
+
     } catch (e) {
         console.log(e);
         res.json({ error: e.message });
@@ -157,18 +243,33 @@ router.post('/updateNote', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionNotes, collectionRecs, collectionFiles, collectionSharedN, collectionCats, collectionUser] = [
-            await soda.createCollection('notes'), await soda.createCollection('recrs'),
-            await soda.createCollection('user_files'), await soda.createCollection('shrs_note'),
-            await soda.createCollection('user_cats'), await soda.createCollection('users')
-        ];
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionRecs = await soda.createCollection('recrs');
+        const collectionFiles = await soda.createCollection('user_files');
+        const collectionSharedN = await soda.createCollection('shrs_note');
+        const collectionCats = await soda.createCollection('user_cats');
+        const collectionUser = await soda.createCollection('users');
+        const collectionDesc = await soda.createCollection('note_desc');
 
-        const { _id, title, text, color, fileList, recId, editable, catList, status, due, isEdt } = req.body;
+        const { _id, title, text, color, fileList, recId, editable, catList, status, due, isEdt, icon } = req.body;
+
+        let note = await findNoteById(_id, collectionNotes);
 
         if (isEdt) await updateNoteUpt(_id, true, collectionNotes);
-        else await updateNoteUptS(_id, true, collectionSharedN);
-        [await updateNote(_id, title, text, color, fileList, recId, editable, catList, status, due, collectionNotes), await updateSharedNoteName(_id, title, due, status, collectionSharedN)];
-        const note = await findNoteByIdF(_id, collectionNotes, collectionFiles, collectionCats, collectionUser);
+        else await updateNoteUptS(_id, true, req.token._id, collectionSharedN);
+
+        await updateNote(_id, title, color, fileList, recId, editable, catList, status, due, icon, collectionNotes);
+
+        await updateSharedNoteName(_id, title, due, status, collectionSharedN);
+
+        await updateDescription(note.text, text, collectionDesc);
+
+        note = await findNoteByIdF(_id, collectionNotes, collectionFiles, collectionCats, collectionUser);
+
+
+        let textI = await getDescById(note.text, collectionDesc);
+
+        note.text = textI;
 
         if (!note) throw new Error('Note not found.')
         if (note && note.recId) {
@@ -193,19 +294,23 @@ router.post('/deleteNote', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionNotes, collectionRecs, collectionUser, collectionSharedN, collectionOrg, collectionNotif, collectionD] = [
-            await soda.createCollection('notes'), await soda.createCollection('recrs'),
-            await soda.createCollection('users'), await soda.createCollection('shrs_note'),
-            await soda.createCollection('orgs'), await soda.createCollection('notifs'),
-            await soda.createCollection('discussions')
-        ];
+        const collectionNotes = await soda.createCollection('notes');
+        const collectionRecs = await soda.createCollection('recrs');
+        const collectionNotif = await soda.createCollection('notifs');
+        const collectionSharedN = await soda.createCollection('shrs_note');
+        const collectionOrg = await soda.createCollection('orgs');
+        const collectionUser = await soda.createCollection('users');
+        const collectionDesc = await soda.createCollection('note_desc');
+        const collectionD = await soda.createCollection('discussions');
 
         const { _id } = req.body;
         const note = await findNoteByIdP(_id, collectionNotes, collectionUser);
         if (note && note.recId) {
             const rec = await findRecByIdDel(note.recId, collectionRecs);
             if (rec && rec.url) {
-                const [user, org] = [await findUserById(req.token._id, collectionUser), await findOrganizationByIdUpt(req.token.org, collectionOrg)];
+                let user = await findUserById(req.token._id, collectionUser);
+                let org = await findOrganizationByIdUpt(req.token.org, collectionOrg);
+
                 var uploaded_data = Number(org.data_uploaded)
                 var available = Number(org.available);
                 var combined_plan = Number(org.combined_plan);
@@ -231,10 +336,15 @@ router.post('/deleteNote', JWT, async (req, res) => {
                     await updateStorage(user._id, userUploaded, userAvailable, collectionUser);
                     await deleteObject(rec.url, req.token.bucket);
                 }
-            }
+            };
+
+            await removeDesc(note.text, collectionDesc);
             await deleteRec(note.recId, collectionRecs);
         }
-        [await deleteNote(_id, collectionNotes), await deleteSharedNote(_id, collectionSharedN), await fileChanged(_id, collectionNotif), await deleteDiscussions(_id, collectionD)];
+        await deleteNote(_id, collectionNotes);
+        await deleteSharedNote(_id, collectionSharedN);
+        await fileChanged(_id, collectionNotif);
+        await deleteDiscussions(_id, collectionD);
 
         res.json({ success: true });
     } catch (e) {

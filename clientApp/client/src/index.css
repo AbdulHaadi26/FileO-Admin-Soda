@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-width: 300px;
+  scrollbar-width: thin;
+}
+
+textarea:focus,textarea:active:focus,textarea.active:focus,
+input:focus,input:active:focus,input.active:focus,
+.btn:focus,.btn:active:focus,.btn.active:focus,
+select:focus,select:active:focus,select.active:focus,
+select.focus,select:active.focus,select.active.focus,
+.btn.focus,.btn:active.focus,.btn.active.focus,
+input.focus,input:active.focus,input.active.focus {
+    outline: none;
+    box-shadow:none !important;
+    border-color: grey !important;
+}
+
+.mFWS {
+  display: flex;
+  padding: 12px;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 12px;
+  margin-bottom: 12px;
+  transition: ease-in 0.2s;
+}
+
+.mFWS img {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 6px;
+}
+
+.mFWS .f-n {
+  word-break: break-all;
+  text-align: center;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 12px;
+  max-width: 80%;
+}
+
+.mFWS:hover {
+  background-color: #dfe6e9;
+  border-radius: 8px;
+}
+
+.mFWS:hover .item-hover, .LI:hover .item-hover {
+  visibility: visible;
+}
+
+.item-hover {
+  visibility: hidden;
+}
+
+@media only screen and (max-width:992px) {
+  body{
+    line-height: 1.5rem !important;
+  }
+}

@@ -36,12 +36,12 @@ router.get('/getEmployee', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionUser, collectionOrg, collectionRole, collectionCat] = [await soda.createCollection('users'), await soda.createCollection('orgs'), await soda.createCollection('roles'), await soda.createCollection('cats')];
+        const collectionUser = await soda.createCollection('users');
+        const collectionOrg = await soda.createCollection('orgs');
 
         const { _id } = req.query;
-        const user = await getProfile(_id, collectionUser, collectionOrg, collectionRole, collectionCat);
+        let user = await getProfile(_id, collectionUser, collectionOrg);
         if (!user) throw new Error('User not found');
-
         res.json({ user: user });
     } catch (e) {
         console.log(e);
@@ -84,7 +84,7 @@ router.get('/getEmployees', JWT, async (req, res) => {
         const collectionUser = await soda.createCollection('users');
 
         const { offset, _id, skipId } = req.query;
-        var userList = await getAllUserLimitDT(offset, _id, skipId, collectionUser);
+        let userList = await getAllUserLimitDT(offset, _id, skipId, collectionUser);
 
         return res.json({ users: userList });
     } catch (e) {
@@ -146,29 +146,33 @@ router.post('/transfer', JWT, async (req, res) => {
         const soda = await getSodaDatabase(connection);
         if (!soda) throw new Error('Soda database has not been intialized yet.');
 
-        const [collectionFiles, collectionCat, collectionUser] = [
-            await soda.createCollection('user_files'), await soda.createCollection('user_cats'), await soda.createCollection('users')
-        ];
+        const collectionUser = await soda.createCollection('users');
+        const collectionFiles = await soda.createCollection('user_files');
+        const collectionCat = await soda.createCollection('user_cats');
+        const collectionSharedF = await soda.createCollection('shrs');
 
         const { tId, tbyId, tbyName, org } = req.body;
 
         let name = `${tbyName}-${tbyId}`;
         let fname = name.toLowerCase().split(' ').join('-')
-        const respData = { name: fname, org: org, uId: tId, created: Date.now(), date: new Date() };
-        let cat = await findCatByName(respData.name, tId, collectionCat);
+        const respData = { name: fname, org: org, uId: tId, created: Date.now(), date: new Date(), isChild: false, parentCat: '', pCat: [] };
+        let cat = await findCatByName(respData.name, tId, '', collectionCat);
         if (!cat) {
             let size = await transferFilesSize(tbyId, collectionFiles);
             if (!size) size = 0;
 
-            let [user1, user2] = [await findUserById(tId, collectionUser), await findUserById(tbyId, collectionUser)];
+            let user1 = await findUserById(tId, collectionUser);
+            let user2 = await findUserById(tbyId, collectionUser);
 
             if (user1 && user2) {
                 let strAvb = user1.storageAvailable;
 
                 if (strAvb > size) {
                     let key = await createCategory(respData, collectionCat);
-                    [await updateUserStorage(tId, user1.storageUploaded, user1.storageAvailable, user1.storageLimit, size, collectionUser), await updateMUserStorage(tbyId, user2.storageUploaded, user2.storageAvailable, user2.storageLimit, size, collectionUser)]
+                    await updateUserStorage(tId, user1.storageUploaded, user1.storageAvailable, user1.storageLimit, size, collectionUser);
+                    await updateMUserStorage(tbyId, user2.storageUploaded, user2.storageAvailable, user2.storageLimit, size, collectionUser);
                     await transferFiles(tbyId, key, tId, collectionFiles);
+                    await deleteByUser(tbyId, collectionSharedF);
                 }
             }
             res.json({ success: true });

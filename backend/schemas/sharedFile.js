@@ -19,6 +19,7 @@ module.exports = {
         }
     },
 
+
     updateFileUptS: async (_id, value, collection) => {
         try {
             let doc = await collection.find().filter({ fileId: _id }).getDocuments();
@@ -26,6 +27,7 @@ module.exports = {
                 await Promise.all(doc.map(async document => {
                     let file = document.getContent();
                     file.updated = value;
+                    file.last_updated = new Date(Date.now());
                     await collection.find().fetchArraySize(0).key(document.key).replaceOne(file);
                 }));
             }
@@ -41,6 +43,7 @@ module.exports = {
                 await Promise.all(doc.map(async document => {
                     let file = document.getContent();
                     file.updated = value;
+                    file.last_updated = new Date(Date.now());
                     await collection.find().fetchArraySize(0).key(document.key).replaceOne(file);
                 }))
             }

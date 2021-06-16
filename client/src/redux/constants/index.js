@@ -8,16 +8,8 @@ export const organizationConstants = {
     GOIReq: 'GOI_REQ',
     GOISuc: 'GOI_SUC',
     GOIErr: 'GOI_ERR',
-    GPISuc: 'GPI_SUC'
-};
-
-export const rolesConstants = {
-    RReq: 'R_REQ',
-    RSuc: 'R_SUC',
-    RErr: 'R_ERR',
-    RClr: 'R_CLR',
-    GRSuc: 'GR_SUC',
-    GRISuc: 'GRI_SUC'
+    GPISuc: 'GPI_SUC',
+    GPBill: 'GP_BILL'
 };
 
 export const catConstants = {
@@ -26,11 +18,31 @@ export const catConstants = {
     CErr: 'C_ERR',
     CClr: 'C_CLR',
     CClrList: 'C_CLR_LIST',
-    CBread:'C_BREAD',
+    CBread: 'C_BREAD',
     GCSuc: 'GC_SUC',
     GCISuc: 'GCI_SUC',
     CCountS: 'C_COUNT_S',
-    CCountM: 'C_COUNT_M'
+    CCountM: 'C_COUNT_M',
+    CAddAtt: 'C_ADD_ATT',
+    CDelAtt:'C_DEL_ATT',
+    CUptAtt:'C_UPT_ATT',
+};
+
+export const billConstants = {
+    BReq: 'BL_REQ',
+    BSuc: 'BL_SUC',
+    BErr: 'BL_ERR'
+};
+
+export const ancConstants = {
+    ANCReq: 'ANC_REQ',
+    ANCSuc: 'ANC_SUC',
+    ANCErr: 'ANC_ERR',
+    ANCClr: 'ANC_CLR',
+    ANCDelAtt: 'ANC_DEL_ATT',
+    ANCUptAtt: 'ANC_UPT_ATT',
+    ANCAddAtt: 'ANC_ADD_ATT',
+    ANCLSuc:'ANCL_SUC'
 };
 
 export const fileConstants = {
@@ -39,11 +51,19 @@ export const fileConstants = {
     FErr: 'F_ERR',
     FClr: 'F_CLR',
     FUpt: 'F_UPT',
+    FAddAtt: 'F_ADD_ATT',
+    FDelAtt:'F_DEL_ATT',
+    FUptAtt:'F_UPT_ATT',
     GFSuc: 'GF_SUC',
     GFISuc: 'GFI_SUC',
     GURLSuc: 'GURL_SUC',
     CTCountS: 'CT_COUNT_S',
-    FCountS: 'F_COUNT_S'
+    FCountS: 'F_COUNT_S',
+    ErrReplace: 'ERR_REPLACE',
+    ErrRClr: 'ERR_REPLACE_CLR',
+    AddToF: 'Add_TO_F',
+    DelToF: 'DEL_TO_F',
+    ReplaceFileVer:'REP_FILE_VER'
 };
 
 export const employeeConstants = {
@@ -67,7 +87,7 @@ export const userConstants = {
     GDReq: 'GD_REQ',
     GDSuc: 'GD_SUC',
     GDErr: 'GD_ERR',
-    SideNav: 'SN_VAL'
+    SideNav: 'SN_VAL',
 };
 
 export const verificationConstants = {
@@ -88,7 +108,10 @@ export const projectConstants = {
     PSuc: 'P_SUC',
     PErr: 'P_ERR',
     PClr: 'P_CLR',
-    POISuc: 'POI_SUC'
+    POISuc: 'POI_SUC',
+    PDelAtt: 'PR_DEL_ATT',
+    PUptAtt: 'PR_UPT_ATT',
+    PAddAtt: 'PR_ADD_ATT'
 };
 
 export const ticketConstants = {
@@ -115,9 +138,11 @@ export const noteConstants = {
     NTErr: 'NT_ERR',
     NTClr: 'NT_CLR',
     NTLSuc: 'NTL_SUC',
+    NTLDel: 'NTL_DEL',
     GNTSuc: 'GNT_SUC',
     NTCount: 'NT_COUNT',
-    NTCountS: 'NT_COUNT_S'
+    NTCountS: 'NT_COUNT_S',
+    NTMdl: 'NT_MDL'
 };
 
 export const taskConstants = {
@@ -125,6 +150,7 @@ export const taskConstants = {
     NTSuc: 'TSK_SUC',
     NTErr: 'TSK_ERR',
     NTClr: 'TSK_CLR',
+    NTLDel: 'TSK_DEL',
     NTLSuc: 'TSKL_SUC',
     GNTSuc: 'GTSKT_SUC',
     NTCount: 'TSKT_COUNT',
@@ -133,7 +159,7 @@ export const taskConstants = {
 
 export const modalConstants = {
     MShow: 'M_SHOW',
-    MHide: 'M_HIDE',  
+    MHide: 'M_HIDE',
     NTMShow: 'NTM_SHOW',
     NTMHide: 'NTM_HIDE'
 };
@@ -159,5 +185,42 @@ export const planConstants = {
     PLErr: 'PL_ERR',
     PLClr: 'PL_CLR',
     PLTSuc: 'PLT_SUC',
-    PLNSuc: 'PLN_SUC'
+    PLNSuc: 'PLN_SUC',
+    PDelAtt:'P_DEL_ATT',
+    PUptAtt:'P_UPT_ATT',
 };
+
+export const pollConstants = {
+    PLReq: 'POL_REQ',
+    PLSuc: 'POL_SUC',
+    PLErr: 'POL_ERR',
+    PLClr: 'POL_CLR',
+    PLTSuc: 'POLT_SUC',
+    PLNSuc: 'POLN_SUC',
+    PDelAtt:'PO_DEL_ATT',
+    PUptAtt:'PO_UPT_ATT',
+    PAddAtt:'PO_ADD_ATT',
+    PCount: 'PO_COUNT'
+};
+
+
+export const planDConstants = {
+    PLDReq: 'PLD_REQ',
+    PLDSuc: 'PLD_SUC',
+    PLDErr: 'PLD_ERR',
+    PLDClr: 'PLD_CLR',
+    PLTDSuc: 'PLTD_SUC',
+    PLTDLSuc: 'PLTDl_SUC'
+};
+
+export const navConstants = {
+    NavSuc: 'NAV_SUC', ISuc: 'I_SUC', JSuc: 'J_SUC',
+};
+
+export const codeConstants = {
+    CodeSuc: 'CODE_SUC'
+}
+
+export const packageConstants = {
+    PkgList: 'PKG_LIST'
+}

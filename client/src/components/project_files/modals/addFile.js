@@ -17,11 +17,12 @@ const Add = ({ setting, registerFile, id, userId, _id, catId, onhandleModal }) =
         [type, setT] = useState(''), [value, setV] = useState(''), [file, setF] = useState(''), [fS, setFS] = useState(''), [description, setDescription] = useState(''), [fName, setFN] = useState(''),
         [errF, setErrF] = useState(false), [errB, setErrB] = useState(false), [cbActive, setCB] = useState(false), [cbLatest, setCBL] = useState(false),
         [cbVersion, setCBV] = useState(false), [cbCompare, setCBC] = useState(false), [errS, setErrS] = useState(false), [cbUpload, setCBU] = useState(false);
+
     let fileSize = setting && setting.maxFileSize ? setting.maxFileSize : 5;
 
     const handleSubmit = e => {
         e.preventDefault();
-        if (name && fS && !errB && mimeT) {
+        if (name && fS && !errB) {
             setErrB(false);
             setErrF(false);
 
@@ -33,6 +34,7 @@ const Add = ({ setting, registerFile, id, userId, _id, catId, onhandleModal }) =
                 active: cbActive, type: type, versioning: cbVersion, compare: ver, uploadable: cbUpload, mime: mimeT, fName: fName, latest: cbLatest
             };
 
+            onhandleModal();
             registerFile(data, file);
 
         } else {
@@ -49,7 +51,7 @@ const Add = ({ setting, registerFile, id, userId, _id, catId, onhandleModal }) =
     function handleCBU(e) { setCBU(e.target.checked); }
     function handleCBL(e) { setCBL(e.target.checked); }
 
-    function handleFilePreview(e) {
+    const handleFilePreview = e => {
         if (e.target.files && e.target.files[0]) {
             setErrB(false); setErrS(false); setErrF(false);
             var type = e.target.files[0].name.split(".");
@@ -85,23 +87,23 @@ const Add = ({ setting, registerFile, id, userId, _id, catId, onhandleModal }) =
             </div>
             <Suspense fallback={<></>}>
                 <CB i={'cbActive'} t='Active' c={cbActive} onhandleCB={handleCBAct}>
-                    <Popover sty={{ marginLeft: '6px' }} text={'This action will activate the file. The project participants will be able to see the file.'} url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                    <Popover sty={{ marginLeft: '6px' }} text={'This action will activate the file. The project participants will be able to see the file.'} url={`/doc/topic/3/content/0`} />
                 </CB>
                 <CB i={'cbUpload'} t='Uploadable' c={cbUpload} onhandleCB={handleCBU}>
-                    <Popover sty={{ marginLeft: '6px' }} text={'If this is selected then the project participants that are allowed access to this file can also upload to this file.'} url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                    <Popover sty={{ marginLeft: '6px' }} text={'If this is selected then the project participants that are allowed access to this file can also upload to this file.'} url={`/doc/topic/3/content/0`} />
                 </CB>
                 <CB i={'cbVersion'} t='Versioning' c={cbVersion} onhandleCB={handleCBVer}>
-                    <Popover sty={{ marginLeft: '6px' }} text={'This action will activate the versioning for a file. Project participant will be able to upload the updated versions.'} url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                    <Popover sty={{ marginLeft: '6px' }} text={'This action will activate the versioning for a file. Project participant will be able to upload the updated versions.'} url={`/doc/topic/3/content/0`} />
                 </CB>
             </Suspense>
             {cbVersion && <Suspense fallback={<></>}>
                 <CB i={'cbLatest'} t='Latest Version' c={cbLatest} onhandleCB={handleCBL} >
-                    <Popover sty={{ marginLeft: '6px' }} text={'This action will only show the latest version of file to the user. Only project manager will be able to see all the versions.'} url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                    <Popover z={true} sty={{ marginLeft: '6px' }} text={'This action will only show the latest version of file to the user. Only project manager will be able to see all the versions.'} url={`/doc/topic/3/content/0`} />
                 </CB>
             </Suspense>}
             {cbVersion && <Suspense fallback={<></>}>
                 <CB i={'cbCompare'} t='Compareable' c={cbCompare} disabled={cbLatest} onhandleCB={handleCBCmp} >
-                    <Popover sty={{ marginLeft: '6px' }} text={'This action will allow a project participants to compare all the versions with each other within the system.'} url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                    <Popover sty={{ marginLeft: '6px' }} text={'This action will allow a project participants to compare all the versions with each other within the system.'} url={`/doc/topic/3/content/0`} />
                 </CB>
             </Suspense>}
         </div>
@@ -111,7 +113,6 @@ const Add = ({ setting, registerFile, id, userId, _id, catId, onhandleModal }) =
                 onhandleModal();
             }}>Cancel</button>
             <button className="btn btn-primary" type="button" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
-                onhandleModal();
                 handleSubmit(e);
             }}>Upload</button>
         </div>

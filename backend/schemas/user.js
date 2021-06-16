@@ -49,13 +49,35 @@ module.exports = {
             const isPasswordMatched = await bcrypt.compare(password, user.password);
             if (!isPasswordMatched) throw new Error('Invalid login credentials');
 
-            const docO = await collectionOrg.find().fetchArraySize(0).key(user.current_employer).getOne();
-            if (docO) {
-                let contentO = docO.getContent();
-                contentO._id = docO.key;
-                user.current_employer = contentO;
+            if (user.flag === 'P') {
+                return user;
+            } else {
+                const docO = await collectionOrg.find().fetchArraySize(0).key(user.current_employer).getOne();
+                if (docO) {
+                    let contentO = docO.getContent();
+                    contentO._id = docO.key;
+                    user.current_employer = contentO;
+                    if (!user.current_employer.active) {
+                        throw new Error('Organization is not active.');
+                    } else if (user.current_employer.isTrail) {
+                        let date1 = new Date(user.current_employer.trail_end_date);
+                        let date2 = new Date(Date.now());
+
+                        let Difference_In_Time = date1.getTime() - date2.getTime();
+                        let Difference_In_Days = Difference_In_Time / (1000 * 3600 * 24);
+
+                        let daysLeft = Math.floor(Difference_In_Days);
+                        daysLeft = daysLeft < 0 ? 0 : daysLeft;
+
+                        if (daysLeft <= 0) user.current_employer.isDisabled = true;
+
+                    }
+                    return user;
+                } else {
+                    throw new Error('User Organization Not Found');
+                }
             }
-            return user;
+
         } catch (e) {
             throw new Error(e.message);
         }
@@ -96,7 +118,7 @@ module.exports = {
     getAllUserByRole: async (role, org, collection) => {
         try {
             let arr = [];
-            let doc = await collection.find().filter({ current_employer: org, userType: { $lte: 2 }, roles: { $in: [role] } }).getDocuments();
+            let doc = await collection.find().filter({ current_employer: org, userType: { $lt: 2 }, roles: { $in: [role] } }).getDocuments();
             if (doc) doc.map(document => arr.push(document.key));
             return arr;
         } catch (e) {
@@ -104,40 +126,73 @@ module.exports = {
         }
     },
 
-    getProfile: async (key, collection, collectionOrg, collectionRole, collectionCat) => {
+    getAllUserEI: async (org, arrId, collection) => {
+        try {
+            let arr = [];
+            let doc;
+
+            if (arrId && arrId.length > 0) {
+                doc = await collection.find().filter({ current_employer: org, userType: { $lt: 2 }, email: { $nin: arrId } }).getDocuments();
+            } else {
+                doc = await collection.find().filter({ current_employer: org, userType: { $lt: 2 } }).getDocuments();
+            }
+
+            if (doc) doc.map(document => {
+                let user = document.getContent();
+                arr.push({ _id: document.key, email: user.email });
+            });
+            return arr;
+        } catch (e) {
+            throw new Error(e.message);
+        }
+    },
+
+    getProfile: async (key, collection, collectionOrg) => {
         try {
             const doc = await collection.find().fetchArraySize(0).key(key).getOne();
             if (!doc) throw new Error('User profile not found');
             let user = doc.getContent();
             user._id = doc.key;
 
-            const docO = await collectionOrg.find().fetchArraySize(0).key(user.current_employer).getOne();
-            if (docO) {
-                let contentO = docO.getContent();
-                contentO._id = docO.key;
-                user.current_employer = contentO;
-            }
+            if (user.flag === 'B') {
+                const docO = await collectionOrg.find().fetchArraySize(0).key(user.current_employer).getOne();
+                if (docO) {
+                    let contentO = docO.getContent();
+                    contentO._id = docO.key;
+                    user.current_employer = contentO;
+                    if (!user.current_employer.active) {
+                        throw new Error('Organization is not active.');
+                    } else if (user.current_employer.isTrail) {
+                        let date1 = new Date(user.current_employer.trail_end_date);
+                        let date2 = new Date(Date.now());
 
-            let roles = [];
-            user.roles && user.roles.length > 0 && await Promise.all(user.roles.map(async roleId => {
-                let tempRole = roleId && await collectionRole.find().fetchArraySize(0).key(roleId).getOne();
-                if (tempRole) {
-                    let role = tempRole.getContent();
-                    role._id = tempRole.key;
-                    let category = [];
-                    role.category && role.category.length > 0 && await Promise.all(role.category.map(async catId => {
-                        let tempCat = await collectionCat.find().fetchArraySize(0).key(catId).getOne();
-                        if (tempCat) {
-                            let cat = tempCat.getContent();
-                            cat._id = tempCat.key;
-                            category.push(cat);
+                        let Difference_In_Time = date1.getTime() - date2.getTime();
+                        let Difference_In_Days = Difference_In_Time / (1000 * 3600 * 24);
+
+                        let daysLeft = Math.floor(Difference_In_Days);
+                        daysLeft = daysLeft < 0 ? 0 : daysLeft;
+
+                        if (daysLeft <= 0) {
+                            user.current_employer.isDisabled = true;
                         }
-                    }));
-                    role.category = category;
-                    roles.push(role);
+                    }
                 }
-            }));
-            user.roles = roles;
+            } else {
+                if (user.isTrail) {
+                    let date1 = new Date(user.trail_end_date);
+                    let date2 = new Date(Date.now());
+
+                    let Difference_In_Time = date1.getTime() - date2.getTime();
+                    let Difference_In_Days = Difference_In_Time / (1000 * 3600 * 24);
+
+                    let daysLeft = Math.floor(Difference_In_Days);
+                    daysLeft = daysLeft < 0 ? 0 : daysLeft;
+
+                    if (daysLeft <= 0) {
+                        user.current_employer.isDisabled = true;
+                    }
+                }
+            }
             [await generateProfileUrl(user), await generateLogoUrl(user)];
             return user;
         } catch (e) {
@@ -158,7 +213,8 @@ module.exports = {
         }
     },
 
-    updateValue: async (key, field, value, collection, collectionOrg, collectionRole, collectionCat) => {
+
+    updateValue: async (key, field, value, collection, collectionOrg) => {
         try {
             let docToReplace = await collection.find().fetchArraySize(0).key(key).getOne();
             if (!docToReplace) return false;
@@ -181,7 +237,6 @@ module.exports = {
                     case 'clientView': user.clientView = value; break;
                     case 'active': user.active = value; break;
                     case 'userT': user.userType = Number(value); break;
-                    case 'roles': user.roles = value; break;
                     case 'storage':
                         if (Number(user.storageUploaded) < Number(value)) {
                             let strAv = Number(value) - Number(user.storageUploaded);
@@ -194,35 +249,29 @@ module.exports = {
 
             await collection.find().fetchArraySize(0).key(key).replaceOne(user);
 
-            const docO = await collectionOrg.find().fetchArraySize(0).key(user.current_employer).getOne();
-            if (docO) {
-                let contentO = docO.getContent();
-                contentO._id = docO.key;
-                user.current_employer = contentO;
+            if (user.flag === 'B') {
+                const docO = await collectionOrg.find().fetchArraySize(0).key(user.current_employer).getOne();
+                if (docO) {
+                    let contentO = docO.getContent();
+                    contentO._id = docO.key;
+                    user.current_employer = contentO;
+                    if (!user.current_employer.active) {
+                        throw new Error('Organization is not active.');
+                    } else if (user.current_employer.isTrail) {
+                        let date1 = new Date(user.current_employer.trail_end_date);
+                        let date2 = new Date(Date.now());
+
+                        let Difference_In_Time = date1.getTime() - date2.getTime();
+                        let Difference_In_Days = Difference_In_Time / (1000 * 3600 * 24);
+
+                        let daysLeft = Math.floor(Difference_In_Days);
+                        daysLeft = daysLeft < 0 ? 0 : daysLeft;
+
+                        if (daysLeft <= 0) user.current_employer.isDisabled = true;
+                    }
+                }
             }
 
-            let roles = [];
-
-            user.roles && user.roles.length > 0 && await Promise.all(user.roles.map(async roleId => {
-                let tempRole = roleId && await collectionRole.find().fetchArraySize(0).key(roleId).getOne();
-                if (tempRole) {
-                    let role = tempRole.getContent();
-                    role._id = tempRole.key;
-                    let category = [];
-                    await Promise.all(role.category.map(async catId => {
-                        let tempCat = catId && await collectionCat.find().fetchArraySize(0).key(catId).getOne();
-                        if (tempCat) {
-                            let cat = tempCat.getContent();
-                            cat._id = tempCat.key;
-                            category.push(cat);
-                        }
-                    }));
-                    role.category = category;
-                    roles.push(role);
-                }
-            }));
-
-            user.roles = roles;
             user._id = docToReplace.key;
             [await generateProfileUrl(user), await generateLogoUrl(user)];
             return user;
@@ -367,7 +416,11 @@ module.exports = {
     findUserByName: async (email, collection) => {
         try {
             const doc = await collection.find().fetchArraySize(0).filter({ email: email }).getOne();
-            if (doc) return doc.getContent().name;
+            if (doc) {
+                let user = doc.getContent();
+                user._id = doc.key;
+                return user;
+            }
             return false;
         } catch (e) {
             throw new Error(e.message);

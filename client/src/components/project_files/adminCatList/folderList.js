@@ -6,7 +6,7 @@ import More from '../../../assets/more.svg';
 const bS = { borderBottom: 'solid 1px #dcdde1' };
 const pF = { position: 'fixed', zIndex: '9998', minHeight: '100vh', backgroundColor: '#000', top: '0', left: '0', opacity: '0.0', minWidth: '100vw' };
 
-export default ({ org, pId, list, isList, ord, setMUpt, setMD, setCID }) => {
+export default ({ org, pId, list, isList, ord, setMUpt, setMD, setCID, setFA, auth, setMove, setCopy, disabled }) => {
 
     const [active, setAct] = useState(-1);
 
@@ -32,33 +32,39 @@ export default ({ org, pId, list, isList, ord, setMUpt, setMD, setCID }) => {
         }); break;
     }
 
-    const renderList = () => isList ? listT.map((Cat, k) => <div className="LI" key={Cat._id}>
+    return isList ? listT.map((Cat, k) => <div className="LI" key={Cat._id}>
         <img src={Folder} alt="Folder" style={{ width: '36px', height: '36px' }} />
         <Link style={{ textDecoration: 'none', marginLeft: '12px', wordBreak: 'break-all' }}
             to={`/organization/${org}/projects/${pId}/files/${Cat._id}/list`} className="mr-auto">{Cat.name} {Cat.updated && <span style={{ color: 'red', fontSize: '12px' }}>(Updated)</span>}</Link>
         {active === k && active >= 0 && <div style={pF} onClick={e => setAct(-1)} />}
-        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
+        {auth && <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
             <h6 className="item-hover" style={{ position: 'relative', width: 'fit-content' }} onClick={e => setAct(active === k ? -1 : k)}>
                 <div style={{ width: '18px', height: '18px', cursor: 'pointer', backgroundImage: `url('${More}')` }} />
                 <div className="dropdown-content" style={{ display: `${active === k ? 'flex' : 'none'}`, top: '12px' }}>
-                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setCID(Cat._id); }}>Upload File</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); !disabled && setCID(Cat._id); }}>Upload File</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); !disabled && setCopy(Cat) }}>Copy Folder</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setMove(Cat) }}>Move Folder</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setFA(Cat._id); }}>Folder Access</h6>
                     <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setMUpt(Cat); }}>Edit Folder</h6>
                     <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setMD(Cat._id); }}>Delete Folder</h6>
                 </div>
             </h6>
-        </div>
+        </div>}
     </div>) : listT.map((Cat, k) => <div className="mFWS col-lg-2 col-4" key={Cat._id}>
         {active === k && active >= 0 && <div style={pF} onClick={e => setAct(-1)} />}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
+        {auth && <div style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
             <h6 className="item-hover" style={{ position: 'relative', width: 'fit-content' }} onClick={e => setAct(active === k ? -1 : k)}>
                 <div style={{ width: '14px', height: '14px', cursor: 'pointer', backgroundImage: `url('${More}')` }} />
                 <div className="dropdown-content" style={{ display: `${active === k ? 'flex' : 'none'}`, top: '12px' }}>
-                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setCID(Cat._id); }}>Upload File</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); !disabled && setCID(Cat._id); }}>Upload File</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); !disabled && setCopy(Cat) }}>Copy Folder</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setMove(Cat) }}>Move Folder</h6>
+                    <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setFA(Cat._id); }}>Folder Access</h6>
                     <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setMUpt(Cat); }}>Edit Folder</h6>
                     <h6 className='s-l' style={bS} onClick={e => { setAct(-1); setMD(Cat._id); }}>Delete Folder</h6>
                 </div>
             </h6>
-        </div>
+        </div>}
         <img src={Folder} alt="Folder" style={{ cursor: 'pointer' }} onClick={e => history.push(`/organization/${org}/projects/${pId}/files/${Cat._id}/list`)} />
         <Link to={`/organization/${org}/projects/${pId}/files/${Cat._id}/list`}
             className="f-n mr-auto" style={{ textDecoration: 'none', wordBreak: 'break-all' }}>
@@ -66,10 +72,5 @@ export default ({ org, pId, list, isList, ord, setMUpt, setMD, setCID }) => {
         {Cat.updated && <h6 className="updated">Updated</h6>}
     </div>);
 
- 
-
-    return <div style={{ width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: '12px' }}>
-        {renderList(list)}
-    </div>  
 }
 

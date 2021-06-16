@@ -3,21 +3,28 @@ import api from '../../utils/api';
 import history from '../../utils/history';
 import Token from './token';
 import { ModalProcess } from "./profileActions";
-const { FReq, FSuc, FErr, GFSuc, CTCountS } = fileConstants;
+import { logOut } from "./userActions";
+const { FReq, FSuc, FErr, GFSuc, CTCountS, FDelAtt, FAddAtt, FUptAtt } = fileConstants;
 const { CClr, CErr, CSuc, CReq, GCSuc, GCISuc } = catConstants;
 
 export const registerCat = data => async dispatch => {
     try {
         dispatch({ type: CReq });
         Token();
-        var res = await api.post("/client_category/register", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        let res = await api.post("/client_category/register", data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         if (res.data.cat && !res.data.error) {
             dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder has been added.' }));
-            history.push(`/organization/${data._id}/user/${data.uId}/clients/category/list`);
-        } else  dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder with same name already exists.', isErr: true }));
+            res.data.cat.rType = 1;
+            dispatch({ type: FAddAtt, payload: res.data.cat });
+        } else {
+            dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder with same name already exists.', isErr: true }));
+        }
         dispatch(clearCat());
-    } catch { dispatch({ type: CErr }); }
-}
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
+};
 
 export const clearCat = () => async dispatch => dispatch({ type: CClr });
 
@@ -27,7 +34,10 @@ export const updateClientCount = () => async dispatch => {
             var res = await api.get(`/client_file/updated/count`, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
             if (res.data.count !== null && !res.data.error) dispatch({ type: CTCountS, payload: res.data.count });
         } catch { dispatch({ type: CErr }); }
-    } catch { dispatch({ type: CErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 };
 
 export const fetchCombined = data => async dispatch => {
@@ -39,7 +49,10 @@ export const fetchCombined = data => async dispatch => {
             dispatch({ type: GFSuc, payload: res.data });
             dispatch({ type: FSuc })
         } else dispatch({ type: FErr });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const fetchCombinedC = data => async dispatch => {
@@ -51,7 +64,10 @@ export const fetchCombinedC = data => async dispatch => {
             dispatch({ type: GFSuc, payload: res.data });
             dispatch({ type: FSuc })
         } else dispatch({ type: FErr });
-    } catch { dispatch({ type: FErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 
@@ -64,7 +80,10 @@ export const getCats = _id => async dispatch => {
             dispatch({ type: GCSuc, payload: res.data });
             dispatch({ type: CSuc })
         } else dispatch({ type: CErr });
-    } catch { dispatch({ type: CErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const getCat = _id => async dispatch => {
@@ -77,21 +96,27 @@ export const getCat = _id => async dispatch => {
             dispatch(updateClientCount());
             dispatch({ type: CSuc })
         } else dispatch({ type: CErr });
-    } catch { dispatch({ type: CErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const updateCatC = data => async dispatch => {
     try {
         dispatch({ type: CReq });
         Token();
-        var res = await api.post(`/client_category/updateCat`, data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
+        let res = await api.post(`/client_category/updateCat`, data, { headers: { 'authorization': `${localStorage.getItem('token')}` } });
         if (res.data.cat && !res.data.error) {
-            dispatch({ type: GCISuc, payload: res.data });
-            dispatch({ type: CSuc });
             dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder details has been updated.' }));
+            dispatch({ type: FUptAtt, payload: res.data.cat });
         } else dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder details could not be updated.', isErr: true }));
+
         dispatch(clearCat());
-    } catch { dispatch({ type: CErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }
 
 export const deleteCat = (_id, id, uId) => async dispatch => {
@@ -99,9 +124,17 @@ export const deleteCat = (_id, id, uId) => async dispatch => {
         dispatch({ type: CReq });
         Token();
         let res = await api.post(`/client_category/deleteCat/${_id}`, '', { headers: { 'authorization': `${localStorage.getItem('token')}` } });
-        if (!res.data.error) dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder has been deleted.' }));
-        else dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder could not be deleted.', isErr: true }));
-        dispatch(clearCat());
+        if (!res.data.error) {
+            dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder has been deleted.' }));
+            dispatch({ type: FDelAtt, payload: { _id } });
+        }
+        else {
+            dispatch(ModalProcess({ title: 'Client Folder', text: 'Client folder could not be deleted.', isErr: true }));
+        }
+        dispatch(clearCat())
         id && uId && history.push(`/organization/${id}/user/${uId}/clients/category/list`);
-    } catch { dispatch({ type: CErr }); }
+    } catch {
+        dispatch(logOut());
+        dispatch(ModalProcess({ title: 'Session', text: 'Your session has expired. Please login again.', isErr: true }));
+    }
 }

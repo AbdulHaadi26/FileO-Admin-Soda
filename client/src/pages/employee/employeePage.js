@@ -9,9 +9,12 @@ const EmployeePage = ({ match, profile, isErr, emp, isSucS, isSuc, setting, getO
     const { _id, id } = match.params, [tabNav, setTN] = useState(0);
 
     useEffect(() => {
-        var data = { _id: _id, org: id };
-        getEmployee(data);
-        getOrganizationS();
+        async function fetch() {
+            let data = { _id: _id, org: id };
+            await getEmployee(data);
+            await getOrganizationS();
+        }
+        fetch();
     }, [getEmployee, getOrganizationS, _id, id]);
 
     return <Container profile={profile} isErr={isErr} isSuc={isSuc && isSucO} eT={'Employee Not Found'} num={4}>

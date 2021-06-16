@@ -61,8 +61,8 @@ const List = ({ id, list, _id, ord, downloadFile, isList }) => {
             style={{ cursor: 'pointer' }} onClick={e => history.push(`/organization/${id}/user/${_id}/view/shared/file/${File.fileId ? File.fileId.versionId : ''}`)} />
         <Link style={{ textDecoration: 'none', wordBreak: 'break-all' }} to={`/organization/${id}/user/${_id}/view/shared/file/${File.fileId ? File.fileId.versionId : ''}`}
             className="f-n">{File.fileId.name.length > 35 ? `${File.fileId.name.substr(0, 35)}...` : File.fileId.name}</Link>
-        <h6 style={{ fontSize: '12px', fontWeight: '400', marginTop: '6px' }}>{File.sharedByName}</h6>
-        {File.updated && <h6 className="updated" style={{ left: '12px' }}>Updated</h6>}
+        <h6 style={{ fontSize: '12px', fontWeight: '400', marginTop: '6px' }}>{File.sharedByName}</h6>    
+        {File.updated && <h6 className="updated">Updated</h6>}
     </div>);
 
     return <div style={{ marginTop: '20px', width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>

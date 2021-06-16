@@ -30,10 +30,11 @@ const Add = ({ setting, registerFile, id, userId, catId, onhandleModal }) => {
             let ver = cbVersion && !latest ? cbCompare : false;
 
             let data = {
-                _id: id, name: name, size: size, postedby: userId, org: id, category: catId, mime: mimeT, fName: fName, latest: latest,
+                name: name, size: size, postedby: userId, org: id, category: catId, mime: mimeT, fName: fName, latest: latest,
                 active: cbActive, type: type, versioning: cbVersion, compare: ver, description: description ? description : '',
                 uploadable: cbUpt
             };
+            onhandleModal();
             registerFile(data, file);
         } else {
             !name && setErrN(true); !fS && setErrS(true);
@@ -88,24 +89,24 @@ const Add = ({ setting, registerFile, id, userId, catId, onhandleModal }) => {
             </div>
             <Suspense fallback={<></>}>
                 <CB i={'cbActive'} t='Active' c={cbActive} onhandleCB={handleCBAct}>
-                    <Popover sty={{ marginLeft: '6px' }} text={'This action will activate the file. The relevant user will be able to see the file.'} url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                    <Popover sty={{ marginLeft: '6px' }} text={'This action will activate the file. The relevant user will be able to see the file.'} url={`/doc/topic/3/content/0`} />
                 </CB>
                 <CB i={'cbUpt'} t='Uploadable' c={cbUpt} onhandleCB={handleCBUpt}>
-                    <Popover sty={{ marginLeft: '6px' }} text={'If this is selected then the users that are allowed access to this file can also upload to this file.'} url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                    <Popover sty={{ marginLeft: '6px' }} text={'If this is selected then the users that are allowed access to this file can also upload to this file.'} url={`/doc/topic/3/content/0`} />
                 </CB>
                 <CB i={'cbVersion'} t='Versioning' c={cbVersion} onhandleCB={handleCBVer}>
                     <Popover sty={{ marginLeft: '6px' }} text={'This action will activate the versioning for a file. Users will be able to upload the updated versions.'}
-                        url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                        url={`/doc/topic/3/content/0`} />
                 </CB>
             </Suspense>
             {cbVersion && <Suspense fallback={<></>}>
                 <CB i={'cbLatest'} t='Latest Version' c={cbLatest} onhandleCB={handleCBLatest} >
-                    <Popover sty={{ marginLeft: '6px' }} text={'This action will only show the latest version of file to the user. Only you will be able to see all the versions.'} url={`https://docs.file-o.com:4242/doc/topic/3/content/0`} />
+                    <Popover z={true} sty={{ marginLeft: '6px' }} text={'This action will only show the latest version of file to the user. Only you will be able to see all the versions.'} url={`/doc/topic/3/content/0`} />
                 </CB>
             </Suspense>}
             {cbVersion && <Suspense fallback={<></>}>
                 <CB i={'cbCompare'} t='Compareable' c={cbCompare} onhandleCB={handleCBCmp} disabled={cbLatest}>
-                    <Popover sty={{ marginLeft: '6px' }} text={'This action will allow a user to compare all the versions with each other within the system.'} url={'https://docs.file-o.com:4242/doc/topic/3/content/0'} />
+                    <Popover sty={{ marginLeft: '6px' }} text={'This action will allow a user to compare all the versions with each other within the system.'} url={'/doc/topic/3/content/0'} />
                 </CB>
             </Suspense>}
         </div>
@@ -115,7 +116,6 @@ const Add = ({ setting, registerFile, id, userId, catId, onhandleModal }) => {
                 onhandleModal();
             }}>Cancel</button>
             <button className="btn btn-primary" type="button" style={{ marginLeft: '12px', fontSize: '14px', fontWeight: '600', padding: '6px 24px' }} onClick={e => {
-                onhandleModal();
                 handleSubmit(e);
             }}>Upload</button>
         </div>
